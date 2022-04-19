@@ -11,7 +11,7 @@ from artiq.experiment import *
 import numpy as np    
 from Detection import *
 from MOTcoils import* 
-from Beamline461 import*
+from Beamline461Class import*
 from HCDL import* 
 
 class Blue_MOT_lifetime(EnvExperiment):
@@ -76,7 +76,7 @@ class Blue_MOT_lifetime(EnvExperiment):
         
            self.t_delay=self.x[ii]
            self.BB.set_MOT3DDP_aom_frequency(self.freq)   # Set loading frequency
-           delay(1*ms)
+           delay(100*ms)
            
            self.MC.Blackman_ramp_up()                     # Ramp up field
            self.MC.flat()

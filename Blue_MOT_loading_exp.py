@@ -11,7 +11,7 @@ from artiq.experiment import *
 import numpy as np    
 from Detection import *
 from MOTcoils import* 
-from Beamline461 import*
+from Beamline461Class import*
 from HCDL import* 
 
 class Blue_MOT_loading(EnvExperiment):
@@ -23,7 +23,7 @@ class Blue_MOT_loading(EnvExperiment):
         self.BB=Beamline461(self)
         
         self.setattr_argument("Delay_duration",
-            Scannable(default=[RangeScan(0.0*1e-3, 200.0*1e-3, 20, randomize=False),NoScan(0.0)],scale=1e-3,
+            Scannable(default=[RangeScan(0.0*1e-3, 500.0*1e-3, 20, randomize=False),NoScan(0.0)],scale=1e-3,
                       unit="ms"),"Loading")
         
         self.setattr_argument("Background_subtract",BooleanValue(False),"Loading")
@@ -33,7 +33,7 @@ class Blue_MOT_loading(EnvExperiment):
         else:
             self.x=self.Delay_duration.sequence
         self.y=np.full(len(self.x), np.nan) # Prepare result array
-        
+      
     def prepare(self):  
         
         # Prepare MOT pulse shape
@@ -52,6 +52,8 @@ class Blue_MOT_loading(EnvExperiment):
         self.MC.init_DAC()
         self.BB.init_aoms()
         
+        #self.MC.Set_current(self.MC.Current_amplitude)
+        
         # Prepare datasets
         
         # Camera output datasets
@@ -62,12 +64,9 @@ class Blue_MOT_loading(EnvExperiment):
         for ii in range(len(self.x)):
            self.Detect.arm()
            
-           delay(200*ms)
+           delay(300*ms)
           
-           
-              
-           
-               
+
            self.BB.shift_MOT2D_aom_frequency(25.0)                  # Shift 2D MOT frequency
            delay(1*ms)
            self.BB.set_MOT3DDP_aom_frequency(self.BB.f_MOT3D_load)  # Set 3D MOT frequency for loading   
@@ -78,10 +77,11 @@ class Blue_MOT_loading(EnvExperiment):
                 delay(self.Detect.Exposure_Time)
                 self.Detect.acquire()     # Acquire images
                 self.Detect.transfer_background_image(ii)
-           delay(200*ms)
+           delay(300*ms)
            self.MC.Blackman_ramp_up()
-           self.MC.flat()
-           self.BB.shift_MOT2D_aom_frequency(0.0)                  # Turn on atom beam
+           #self.MC.flat()
+           #self.MC.Set_current(self.MC.Current_amplitude)
+           self.BB.shift_MOT2D_aom_frequency(0.0)                # Turn on atom beam
            
            delay(self.x[ii])                                     # Delay duration 
            self.Detect.arm()
@@ -90,6 +90,7 @@ class Blue_MOT_loading(EnvExperiment):
                self.Detect.trigger_camera()                               # Trigger camera
                
            delay(self.Detect.Exposure_Time)
+           delay(5*ms)
            self.MC.Blackman_ramp_down()
            delay(200*ms)
            self.Detect.acquire()                                # Acquire images
@@ -97,9 +98,9 @@ class Blue_MOT_loading(EnvExperiment):
            self.Detect.transfer_image_background_subtracted(ii)
                              # Disarm camera   
                   
-           self.Detect.print_bg_image_array()
-           self.Detect.print_image_array()
-           self.Detect.print_bg_subtracted_image_array()
+           #self.Detect.print_bg_image_array()
+           #self.Detect.print_image_array()
+           #self.Detect.print_bg_subtracted_image_array()
            # Shift 2D MOT frequency back to loading frequency
            
            self.Detect.disarm() 

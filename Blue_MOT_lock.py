@@ -9,7 +9,7 @@ from artiq.experiment import *
 import numpy as np    
 from Detection import *
 from MOTcoils import* 
-from Beamline461 import*
+from Beamline461Class import*
 from HCDL import* 
 
 class Blue_MOT_lock(EnvExperiment):

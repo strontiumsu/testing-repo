@@ -40,7 +40,6 @@ class MOTcoils(EnvExperiment):
         
         
         self.w=np.blackman(self.Npoints+1)  
-        #w1=np.insert(w,int((self.Npoints)/2),w[int((self.Npoints)/2)])
         self.A=self.Current_amplitude
         self.dt=self.t_ramp/(self.Npoints/2)    
         
@@ -62,7 +61,7 @@ class MOTcoils(EnvExperiment):
     @kernel         
     def Blackman_ramp_up(self):
         
-        for ii in range(int(self.Npoints/2)):                      
+        for ii in range(int(self.Npoints/2)+1):                      
                                delay(self.dt)
                                self.dac_0.write_dac(0,self.A*self.w[ii])
                                self.dac_0.load()
@@ -78,9 +77,27 @@ class MOTcoils(EnvExperiment):
     def Blackman_ramp_down(self):
         for ii in range(int(self.Npoints/2)):
                                delay(self.dt)
-                               self.dac_0.write_dac(0,self.A * self.w[int(self.Npoints/2+ii)])
+                               self.dac_0.write_dac(0,self.A * self.w[int(self.Npoints/2+1+ii)])
                                self.dac_0.load()
                                ii+=1
+                               
+    @kernel                        
+    def Blackman_ramp_down_from_to(self, top, bottom):
+        for ii in range(int(self.Npoints/2)):
+                               delay(self.dt)
+                               self.dac_0.write_dac(0,(top - bottom) * self.w[int(self.Npoints/2+ii+1)] + bottom)
+                               self.dac_0.load()
+                               ii+=1  
+                            
+                               
+    @kernel                        
+    def Linear_ramp(self, bottom, top, time):
+        delt = time/(self.Npoints/2)
+        for ii in range(int(self.Npoints/2)):
+                               delay(self.dt)
+                               self.dac_0.write_dac(0,bottom + (top-bottom)/time*ii*delt )
+                               self.dac_0.load()
+                               ii+=1  
 
      
 

@@ -17,7 +17,7 @@ class Detection(EnvExperiment):
         self.setattr_device("ttl4")         # Camera hardware trigger
         self.cam=self.get_device("camera")  # Thorlabs camera
         
-        self.setattr_argument("Exposure_Time",NumberValue(25*1e-3,min=10*1e-3,max=100*1e-3,scale=1e-3,
+        self.setattr_argument("Exposure_Time",NumberValue(25*1e-3,min=1*1e-3,max=100*1e-3,scale=1e-3,
                       unit="ms"),"Detection")
         
         self.setattr_argument("Hardware_gain",NumberValue(100,min=1,max=1000,scale=1
@@ -54,7 +54,8 @@ class Detection(EnvExperiment):
            self.cam.disarm() 
            self.cam.set_exposure(self.Exposure_Time)
            self.cam.set_gain(self.Hardware_gain)
-           self.cam.set_roi(903,205,250,300)
+           #self.cam.set_roi(928,537,1160-928,776-537)
+           self.cam.set_roi(1000,900,500,500)
  
     def prep_datasets(self,x):
             self.set_dataset("detection.index",x, broadcast=True)

@@ -22,7 +22,7 @@ class AOM689Test(EnvExperiment):
     def build(self):
         self.setattr_device("core")
         self.setattr_device("ttl5")
-        self.setattr_device("urukul1_cpld")
+        self.setattr_device("urukul2_cpld")
     
         # Probe AOMs
         self.setattr_argument("Probe_AOM_frequency",
@@ -39,10 +39,10 @@ class AOM689Test(EnvExperiment):
         # Can be used as HMC830 reference on Sayma RTM.
         # When using this reference, Sayma must be recalibrated every time Urukul
         # is rebooted, as Urukul is not synchronized to the Kasli.
-        self.urukul_hmc_ref_probe = self.get_device("urukul1_ch2")
+        self.urukul_hmc_ref_probe = self.get_device("urukul2_ch0")
 
         
-        self.urukul_meas = [self.get_device("urukul1_ch" + str(i)) for i in range(3)]
+        self.urukul_meas = [self.get_device("urukul2_ch0")]
         # The same waveform is output on all first 4 SAWG channels (first DAC).
         #self.flist = [i for i in range(140,240)]
        
@@ -67,7 +67,7 @@ class AOM689Test(EnvExperiment):
             
             self.core.reset()
             delay(1*ms)
-            self.urukul1_cpld.init()
+            self.urukul2_cpld.init()
 
 
             delay(1*ms)
@@ -82,7 +82,7 @@ class AOM689Test(EnvExperiment):
             fprobe = self.Probe_AOM_frequency.sequence[0]
             dds_ftw_probe=self.urukul_meas[0].frequency_to_ftw(fprobe)
             
-            urukul_ch =self.urukul_meas[2]
+            urukul_ch =self.urukul_meas[0]
             delay(1*ms)
             urukul_ch.init()
             urukul_ch.set_mu(dds_ftw_probe, asf=urukul_ch.amplitude_to_asf(self.probe_dds_scale))
