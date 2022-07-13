@@ -68,7 +68,8 @@ class Blue_MOT_opt(EnvExperiment):
         self.setattr_argument("MOT2D_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.8),"MOT2D")
         self.setattr_argument("MOT2D_Urukul_attenuation",NumberValue(self.get_dataset('blue_MOT.attenuation2D'),min=1.0,max=30.0),"MOT2D")
 
-        
+        self.setattr_argument("Detection_pulse_time",NumberValue(1.0*1e-3,min=0.0,max=10.00*1e-3,scale = 1e-3,
+                      unit="ms"),"Detection")
         
         # Urukul clock output syntonized to the RTIO clock.
         # Can be used as HMC830 reference on Sayma RTM.
@@ -245,8 +246,12 @@ class Blue_MOT_opt(EnvExperiment):
                 urukul_ch =self.urukul_meas[1]
                 dds_ftw_MOT3DDP=self.urukul_meas[1].frequency_to_ftw(runfMOT3Ddetect)
                 urukul_ch.set_mu(dds_ftw_MOT3DDP, asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))  # Set 3D MOT frequency for loading   
+                urukul_ch.sw.off()
                 delay(200*ms)
                 self.Detect.trigger_camera()    # Trigger camera 
+                urukul_ch.sw.on()
+                delay(self.Detection_pulse_time)
+                urukul_ch.sw.off()
                 delay(self.Detect.Exposure_Time)
                 self.Detect.acquire()     # Acquire images
                 self.Detect.transfer_background_image(ii)
@@ -258,16 +263,20 @@ class Blue_MOT_opt(EnvExperiment):
             delay(200*ms)
                 
             self.MC.Blackman_ramp_up()
-
-           
+            
+            urukul_ch.sw.on()
             self.MC.flat()                                   # Delay duration 
             self.Detect.arm()
             with parallel:
                 with sequential:
                     urukul_ch =self.urukul_meas[1]
+                    urukul_ch.sw.off()
                     dds_ftw_MOT3DDP=self.urukul_meas[1].frequency_to_ftw(runfMOT3Ddetect)
                     urukul_ch.set_mu(dds_ftw_MOT3DDP, asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))# Set 3D MOT frequency for detection
-                self.Detect.trigger_camera() # Trigger camera
+            self.Detect.trigger_camera() # Trigger camera
+            urukul_ch.sw.on()
+            delay(self.Detection_pulse_time)
+            urukul_ch.sw.off()
                
             delay(self.Detect.Exposure_Time)
             delay(5*ms)
@@ -286,6 +295,8 @@ class Blue_MOT_opt(EnvExperiment):
             delay(50*ms)
             self.mutate_dataset("frequency",ii,self.scanning_var[ii])
             self.mutate_dataset("detection.index",ii,ii)
+            
+            self.Detect.calc_marginal_stats(ii)
                 
         ## Analyze data and update datasets
         ## Find frequency with maximum florescence and set data set to that value

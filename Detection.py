@@ -20,7 +20,7 @@ class Detection(EnvExperiment):
         self.setattr_argument("Exposure_Time",NumberValue(25*1e-3,min=1*1e-3,max=100*1e-3,scale=1e-3,
                       unit="ms"),"Detection")
         
-        self.setattr_argument("Hardware_gain",NumberValue(100,min=1,max=1000,scale=1
+        self.setattr_argument("Hardware_gain",NumberValue(100,min=0,max=350,scale=1
                       ),"Detection")
         
         #self.setattr_argument("N_reps",NumberValue(2000,min=1,max=2000, ndecimals = 0, scale = 1,step=1,type='int'),"Detection")
@@ -30,7 +30,6 @@ class Detection(EnvExperiment):
         
     @kernel
     def trigger_camera(self):
-       #delay(750*ms)
        self.ttl4.on()
        delay(1*ms)
        self.ttl4.off()  
@@ -44,7 +43,7 @@ class Detection(EnvExperiment):
     
     
     def arm(self):
-        self.cam.arm(2)
+        self.cam.arm(1)
         
     def acquire(self):
         self.cam.acquire()
@@ -54,14 +53,17 @@ class Detection(EnvExperiment):
            self.cam.disarm() 
            self.cam.set_exposure(self.Exposure_Time)
            self.cam.set_gain(self.Hardware_gain)
-           #self.cam.set_roi(928,537,1160-928,776-537)
-           self.cam.set_roi(1000,900,500,500)
+           self.cam.set_roi(1225,1050,200,200)
+           #self.cam.frames_per_trigger_zero_for_unlimited = 0
  
     def prep_datasets(self,x):
             self.set_dataset("detection.index",x, broadcast=True)
             self.set_dataset("detection.image_sum", x, broadcast=True)
             self.set_dataset("detection.background_image_sum", x, broadcast=True)
             self.set_dataset("detection.background_subtracted_image_sum", x, broadcast=True)
+            self.set_dataset("detection.deviationx", x, broadcast=True)
+            self.set_dataset("detection.deviationy", x, broadcast=True)
+        
      
     def transfer_background_image(self,i):
                 self.background_image=np.copy(self.cam.get_all_images()[0])
@@ -94,6 +96,64 @@ class Detection(EnvExperiment):
                 self.set_dataset("detection.background_subtracted_image", self.background_free_image, broadcast=True)
                 
                 self.cam.disarm()     
+  
+                
+    def calc_marginal_stats(self,i):
+        tot = np.sum(self.background_free_image)
+        
+        #ly = 200
+        
+        ix = self.background_free_image/np.sum(self.background_free_image)
+        iy = np.transpose(self.background_free_image)/np.sum(self.background_free_image)
+
+        lx = 110
+        ux = 170
+        ly = 1
+        uy = 190
+        
+        lenx = ux-lx
+        leny = uy-ly
+        
+        datax = np.zeros(lenx)
+        datay = np.zeros(leny)
+        
+        for j in range(lenx):
+            datax[j] = np.sum(ix[j+lx])
+        for j in range(leny):
+            datay[j] = np.sum(iy[j+ly])
+            
+        datax = datax/np.sum(datax)
+        datay = datay/np.sum(datay)
+
+        # for j in range(len(ix[0])):
+        #     datax[j] = np.sum(ix[j])
+        # for j in range(ly):
+        #     datay[j] = np.sum(iy[j])
+            
+        meanx = 0.
+        meany = 0.
+
+        for j in range(lenx):
+            meanx = meanx + j*datax[j]
+        for j in range(leny):
+            meany = meany + j*datay[j]
+    
+        varx = 0.
+        vary = 0.
+        for j in range(lenx):
+            varx = varx + ((j-meanx)**2)*datax[j]
+        for j in range(leny):
+            vary = vary + ((j-meany)**2)*datay[j]
+               
+        self.mutate_dataset("detection.deviationx", i, np.sqrt(varx))
+        self.mutate_dataset("detection.deviationy", i, np.sqrt(vary))
+        
+        self.set_dataset("detection.margx", datax, broadcast=True)
+        self.set_dataset("detection.margy", datay, broadcast=True)
+                
+    def return_bg_subtracted_image_array(self):     
+        return self.background_free_image
+                
     def print_image_array(self):
                print('Image array: ')
                print(self.image_buffer_copy1)      

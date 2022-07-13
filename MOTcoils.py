@@ -21,11 +21,11 @@ class MOTcoils(EnvExperiment):
         #self.setattr_argument("Pulse_duration",
         #    Scannable(default=[NoScan(60*1e-3), RangeScan(10*1e-3, 30*1e-3, 10, randomize=False)],scale=1e-3,
         #              unit="ms"),"MOT_driver")
-        self.setattr_argument("Pulse_fully_on_duration", NumberValue(200.0*1e-3,min=10.0*1e-3,max=500.00*1e-3,scale=1e-3,
+        self.setattr_argument("Pulse_fully_on_duration", NumberValue(200.0*1e-3,min=10.0*1e-3,max=9000.00*1e-3,scale=1e-3,
                       unit="ms"),"MOT coil driver")         
-        self.setattr_argument("t_ramp",NumberValue(50.0*1e-3,min=20.0*1e-3,max=100.00*1e-3,scale=1e-3,
+        self.setattr_argument("t_ramp",NumberValue(50.0*1e-3,min=1.0*1e-3,max=100.00*1e-3,scale=1e-3,
                       unit="ms"),"MOT coil driver") # ramp duration
-        self.setattr_argument("Current_amplitude",NumberValue(0.0,min=0.0,max=5.0,
+        self.setattr_argument("Current_amplitude",NumberValue(0.0,min=0.0,max=10.0,
                       unit="A"),"MOT coil driver") # Pulse amplitude
         self.setattr_argument("Npoints",NumberValue(30,min=0,max=100.00),"MOT coil driver") # number of discret points in each ramp
         #self.setattr_argument("duty cycle",NumberValue(3,min=0,max=100.00),"MOT_driver") # number of discret points in each ramp
@@ -57,6 +57,8 @@ class MOTcoils(EnvExperiment):
     @kernel
     def init_DAC(self):
         self.dac_0.init()
+        
+       
     
     @kernel         
     def Blackman_ramp_up(self):
@@ -91,10 +93,10 @@ class MOTcoils(EnvExperiment):
                             
                                
     @kernel                        
-    def Linear_ramp(self, bottom, top, time):
-        delt = time/(self.Npoints/2)
-        for ii in range(int(self.Npoints/2)):
-                               delay(self.dt)
+    def Linear_ramp(self, bottom, top, time,num_pts):
+        delt = time/(num_pts)
+        for ii in range(int(num_pts)):
+                               delay(delt)
                                self.dac_0.write_dac(0,bottom + (top-bottom)/time*ii*delt )
                                self.dac_0.load()
                                ii+=1  

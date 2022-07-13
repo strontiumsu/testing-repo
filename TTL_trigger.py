@@ -13,18 +13,15 @@ class TTL_trigger(EnvExperiment):
     
     def build(self): 
         self.setattr_device("core")
-        self.setattr_device("ttl4")
+        self.setattr_device("ttl5")
         
     @kernel    
     def run(self):
         self.core.reset()
         # Main loop
-        for ii in range(10000):
             
-            delay(20*ms)
-            self.ttl4.on()
-            delay(1*ms)
-            self.ttl4.off()
-            
-            ii+=1
-            
+        delay(20*ms)
+        self.ttl5.on()
+        delay(10*ms)
+        self.ttl5.off()
+        delay(20*ms)

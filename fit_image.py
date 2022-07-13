@@ -80,7 +80,8 @@ class Fit2DGaussParabola(Fit):
 
     def guess(self):
         # TODO: this is usually smarter, based on self.data and self.meta
-        return [1000, 76, 25, 3500, 4, 4, 3500, 20, 20]
+        #return [1000, 76, 25, 3500, 4, 4, 3500, 20, 20]
+        return [10, 70, 70, 200, 4, 4, 200, 20, 20]
 
     def model(self, param):
         p = self.variables_dict(param)

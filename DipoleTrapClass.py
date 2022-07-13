@@ -74,9 +74,15 @@ class DipoleTrap(EnvExperiment):
         dds_ftw_Dipole_AOM=self.urukul_meas[0].frequency_to_ftw(self.Dipole_AOM_frequency + df*1e6)
         urukul_ch.set_mu(dds_ftw_Dipole_AOM, asf=urukul_ch.amplitude_to_asf(self.Dipole_dds_scale)) 
         
+    @kernel 
+    def set_Dipole_aom_atten(self, user_atten): 
+      
+        urukul_ch =self.urukul_meas[0]
+        urukul_ch.set_att(user_atten)
+        
         
     @kernel 
-    def pulse_Dipole(self,t):     # Pulse the 3D MOT beams on for duration t
+    def pulse_Dipole(self,t):     # Pulse the dipole trap beam on for duration t
         urukul_ch =self.urukul_meas[0]
         urukul_ch.sw.on()  
         delay(t)
@@ -89,6 +95,17 @@ class DipoleTrap(EnvExperiment):
         urukul_ch.sw.on()  
         delay(t)
         urukul_ch.sw.off()
+        
+        
+    @kernel 
+    def Dipole_aom_off(self): 
+        urukul_ch =self.urukul_meas[0]
+        urukul_ch.sw.off() 
+        
+    @kernel 
+    def Dipole_aom_on(self): 
+        urukul_ch =self.urukul_meas[0]
+        urukul_ch.sw.on() 
         
         
         

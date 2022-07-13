@@ -23,38 +23,31 @@ class Blue_MOT_lifetime(EnvExperiment):
         self.BB=Beamline461(self)
         
         self.setattr_argument("Delay_duration",
-            Scannable(default=[NoScan(0.0),RangeScan(0.0*1e-3, 1000.0*1e-3, 20, randomize=False)],scale=1e-3,
+            Scannable(default=[RangeScan(0.0*1e-3, 500.0*1e-3, 20, randomize=False),NoScan(0.0)],scale=1e-3,
                       unit="ms"),"Loading")
         
-        if hasattr(self.Delay_duration,'sequence'):
-            print(True)
-            self.x=self.Delay_duration.sequence
+        self.setattr_argument("Background_subtract",BooleanValue(False),"Loading")
+        
+        self.setattr_argument("Detection_pulse_time",NumberValue(1.0*1e-3,min=0.0,max=10.00*1e-3,scale = 1e-3,
+                      unit="ms"),"Detection")
+            
+        if not hasattr(self.Delay_duration,'sequence'):
+            self.x=np.array([0,0])
         else:
-            self.x=self.Delay_duration
-         
-        self.y=np.full(len(self.x), np.nan)
-        self.t_delay=self.x[0]
-        self.freq=self.get_dataset('blue_MOT.f_load')
-        self.f_detect=self.get_dataset('blue_MOT.f_detect')
+            self.x=self.Delay_duration.sequence
+        self.y=np.full(len(self.x), np.nan) # Prepare result array
       
-            
-        
-       
-            
-        
-        
     def prepare(self):  
         
         # Prepare MOT pulse shape
         self.MC.Blackman_pulse_profile()
+        # Set AOM attenuations
         self.BB.set_atten()
        
         # Initialize camera
         self.Detect.camera_init()
         self.Detect.disarm()
         
-        
-    
     @kernel    
     def run(self):
         
@@ -62,49 +55,74 @@ class Blue_MOT_lifetime(EnvExperiment):
         self.MC.init_DAC()
         self.BB.init_aoms()
         
+        #self.MC.Set_current(self.MC.Current_amplitude)
+        
         # Prepare datasets
+        
+        # Camera output datasets
         self.Detect.prep_datasets(self.y)
-       
         self.set_dataset("time_delay", self.x, broadcast=True)
-       
+        
         
         # Main loop
         for ii in range(len(self.x)):
            self.Detect.arm()
            
+           delay(300*ms)
+
+           self.BB.MOT2D_off()                  # Turn of 2D MOT
+           delay(1*ms)
+           self.BB.set_MOT3DDP_aom_frequency(self.BB.f_MOT3D_detect)  # Set 3D MOT frequency for detection   
+           self.BB.MOT_off()
            delay(200*ms)
-        
-           self.t_delay=self.x[ii]
-           self.BB.set_MOT3DDP_aom_frequency(self.freq)   # Set loading frequency
-           delay(100*ms)
            
-           self.MC.Blackman_ramp_up()                     # Ramp up field
+           if self.Background_subtract:
+                self.Detect.trigger_camera()    # Trigger camera 
+                self.BB.MOT_on()
+                delay(self.Detection_pulse_time)
+                self.BB.MOT_off()
+                delay(self.Detect.Exposure_Time)
+                self.Detect.acquire()     # Acquire images
+                self.Detect.transfer_background_image(ii)
+                self.Detect.arm()
+           delay(300*ms)
+           
+           self.BB.set_MOT3DDP_aom_frequency(self.BB.f_MOT3D_load)  # Set 3D MOT frequency for detection
+           self.MC.Blackman_ramp_up()
+           self.BB.MOT2D_on()                # Turn on atom beam
+           self.BB.MOT_on()
            self.MC.flat()
-           self.BB.shift_MOT2D_aom_frequency(25.0)        # Detune 2D MOT AOM detuning in MHz. Ideally stopping atom beam
            
-           delay(self.t_delay)                            # Delay  
+           
+           self.BB.MOT2D_off()                # Turn off atom beam
+           delay(self.x[ii])                                     # Delay duration 
            
            with parallel:
-               self.BB.set_MOT3DDP_aom_frequency(self.f_detect) # Switch to detection frequency
-               self.Detect.trigger_camera()                     # Trigger camera
-           
-            
+               self.Detect.trigger_camera()                              # Trigger camera
+               self.BB.set_MOT3DDP_aom_frequency(self.BB.f_MOT3D_detect)  # Set 3D MOT frequency for detection
+                 
+           delay(self.Detection_pulse_time)
+           self.BB.MOT_off()
            delay(self.Detect.Exposure_Time)
+           delay(5*ms)
            self.MC.Blackman_ramp_down()
            delay(200*ms)
            self.Detect.acquire()                                # Acquire images
            
-           self.Detect.transfer_image(ii)
+           self.Detect.transfer_image_background_subtracted(ii)
                              # Disarm camera   
                   
-           
-           self.BB.shift_MOT2D_aom_frequency(0.0)               # Shift 2D MOT frequency back to loading frequency
+           #self.Detect.print_bg_image_array()
+           #self.Detect.print_image_array()
+           #self.Detect.print_bg_subtracted_image_array()
+           # Shift 2D MOT frequency back to loading frequency
            
            self.Detect.disarm() 
-           self.mutate_dataset("time_delay",ii,self.t_delay)
-           self.mutate_dataset("index",ii,ii)
-         
-           
+          
+           self.mutate_dataset("time_delay",ii,self.x[ii])
+           self.mutate_dataset("detection.index",ii,ii)
         
+       
         
-            #self.Detect.clean_up()
+        delay(200*ms)   
+        self.MC.Zero_current()

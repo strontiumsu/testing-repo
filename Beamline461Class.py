@@ -26,20 +26,20 @@ class Beamline461(EnvExperiment):
         
         # 3D MOT AOM  
         self.setattr_argument("MOT3DDP_AOM_frequency",
-            Scannable(default=[NoScan(97*1e6), RangeScan(90*1e6, 115*1e6, 1, randomize=False)],scale=1e6,
+            Scannable(default=[NoScan(87*1e6), RangeScan(80*1e6, 100*1e6, 1, randomize=False)],scale=1e6,
                       unit="MHz"),"MOT3DDP")
         self.setattr_argument("MOT3DDP_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.8),"MOT3DDP")
         self.setattr_argument("MOT3DDP_Urukul_attenuation",NumberValue(6.0,min=1.0,max=30.0),"MOT3DDP")
         
         # Zeeman slower AOM
-        self.setattr_argument("Zeeman_AOM_frequency",NumberValue(355*1e6,min=300*1e6,max=450*1e6,scale=1e6,unit='MHz'),"Zeeman")
+        self.setattr_argument("Zeeman_AOM_frequency",NumberValue(300*1e6,min=250*1e6,max=350*1e6,scale=1e6,unit='MHz'),"Zeeman")
         self.setattr_argument("Zeeman_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.95),"Zeeman")
-        self.setattr_argument("Zeeman_Urukul_attenuation",NumberValue(9.5,min=0.0,max=30.0),"Zeeman")
+        self.setattr_argument("Zeeman_Urukul_attenuation",NumberValue(18.0,min=0.0,max=30.0),"Zeeman")
 
         
         # 2D MOT AOM
         
-        self.setattr_argument("MOT2D_AOM_frequency",NumberValue(193*1e6,min=170*1e6,max=250*1e6,scale=1e6,unit='MHz'),"MOT2D")
+        self.setattr_argument("MOT2D_AOM_frequency",NumberValue(194*1e6,min=170*1e6,max=250*1e6,scale=1e6,unit='MHz'),"MOT2D")
         self.setattr_argument("MOT2D_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.8),"MOT2D")
         self.setattr_argument("MOT2D_Urukul_attenuation",NumberValue(11.5,min=1.0,max=30.0),"MOT2D")
         
@@ -147,14 +147,18 @@ class Beamline461(EnvExperiment):
     @kernel    
     def reinit_MOT3DDP_aom(self, user_atten, user_freq):
         
-        urukul_ch =self.urukul_meas[1]
-        urukul_ch.init() 
+        urukul_ch = self.urukul_meas[1]
+        urukul_ch.set_att(user_atten) 
+        urukul_ch.set_mu(urukul_ch.frequency_to_ftw(user_freq), asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))
+        
+        # urukul_ch =self.urukul_meas[1]
+        # urukul_ch.init() 
 
-        dds_ftw_MOT3DDP=self.urukul_meas[1].frequency_to_ftw(user_freq)
+        # dds_ftw_MOT3DDP=self.urukul_meas[1].frequency_to_ftw(user_freq)
             
-        urukul_ch.set_mu(dds_ftw_MOT3DDP, asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))
-        urukul_ch.set_att(user_atten)
-        urukul_ch.sw.on()   
+        # urukul_ch.set_mu(dds_ftw_MOT3DDP, asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))
+        # urukul_ch.set_att(user_atten)
+        # urukul_ch.sw.on()   
          
         
     @kernel 
@@ -167,9 +171,9 @@ class Beamline461(EnvExperiment):
     @kernel 
     def set_MOT3DDP_aom_atten(self, user_atten): 
       
-        urukul_ch =self.urukul_meas[1]
+        #urukul_ch =self.urukul_meas[1]
         #urukul_ch.set_mu(dds_ftw_MOT3DDP, asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))
-        urukul_ch.set_att(user_atten) 
+        self.urukul_meas[1].set_att(user_atten) 
         
     @kernel 
     def shift_MOT2D_aom_frequency(self,df): 
@@ -203,6 +207,27 @@ class Beamline461(EnvExperiment):
     def MOT_off(self):    
         urukul_ch =self.urukul_meas[1]
         urukul_ch.sw.off() 
+        
+    @kernel
+    def MOT2D_on(self):    
+        urukul_ch =self.urukul_meas[0]
+        urukul_ch.sw.on()  
+        
+    @kernel
+    def MOT2D_off(self):    
+        urukul_ch =self.urukul_meas[0]
+        urukul_ch.sw.off()
+        
+        
+    @kernel
+    def Zeeman_on(self):    
+        urukul_ch =self.urukul_meas[2]
+        urukul_ch.sw.on()  
+        
+    @kernel
+    def Zeeman_off(self):    
+        urukul_ch =self.urukul_meas[2]
+        urukul_ch.sw.off()
  
         
         
