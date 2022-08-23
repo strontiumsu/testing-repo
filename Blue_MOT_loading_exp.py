@@ -10,24 +10,22 @@ Created on Tue Feb 15 21:19:34 2022
 from artiq.experiment import *
 import numpy as np    
 from Detection import *
-from MOTcoils import* 
+from MOTcoils import * 
 from Beamline461Class import*
 from Beamline689Class import*
-from DipoleTrapClass import*
-from HCDL import* 
+from HCDL import * 
 
 class Blue_MOT_loading(EnvExperiment):
     
     def build(self): 
         self.setattr_device("core")
-        self.setattr_device("sampler0")
-        
+        #self.setattr_device("sampler0")
+             
         
         self.Detect=Detection(self)
         self.MC=MOTcoils(self)
         self.BB=Beamline461(self)
         self.BR=Beamline689(self)
-        self.Dipole=DipoleTrap(self)
         
         self.setattr_argument("Delay_duration",
             Scannable(default=[RangeScan(0.0*1e-3, 500.0*1e-3, 20, randomize=False),NoScan(0.0)],scale=1e-3,
@@ -49,13 +47,13 @@ class Blue_MOT_loading(EnvExperiment):
       
       
     def prepare(self):  
+         
         
         # Prepare MOT pulse shape
         self.MC.Blackman_pulse_profile()
         # Set AOM attenuations
         self.BB.set_atten()
         self.BR.set_atten()
-        self.Dipole.set_atten()
        
         # Initialize camera
         self.Detect.camera_init()
@@ -63,15 +61,15 @@ class Blue_MOT_loading(EnvExperiment):
       
     @kernel    
     def run(self):
+          
         
-        self.core.reset()
-        self.sampler0.init()                                                            
+        self.core.reset()   
+                                                   
         self.MC.init_DAC()
         self.BB.init_aoms()
         self.BR.init_aoms()
-        self.Dipole.init_aoms()
 
-        
+        Lin_ramp_time = 100*ms
         #self.MC.Set_current(self.MC.Current_amplitude)
         
         # Prepare datasets
@@ -79,67 +77,104 @@ class Blue_MOT_loading(EnvExperiment):
         # Camera output datasets
         self.Detect.prep_datasets(self.y)
         self.set_dataset("time_delay", self.x, broadcast=True)
-        self.set_dataset("PDsignal", self.y, broadcast=True)
         
-        # Main loop
+
+       # Main loop
         for ii in range(len(self.x)):
-           self.Detect.arm()
-           
-           delay(300*ms)
-           
-           self.sampler0.set_gain_mu(0, 0) #sets each channel's gain to 0db
-           smp = [0]*8       #creates floating point variable
-          
-           self.BR.Repumpers_aom_on() # turn on repumpers
-           self.BB.MOT2D_off()                  # Turn of 2D MOT
-           delay(1*ms)
-           self.BB.reinit_MOT3DDP_aom(self.Detection_attenuation, self.BB.f_MOT3D_detect) # switch to detection frequency   
-           self.BB.MOT_off()
-           delay(200*ms)
-           
-           if self.Background_subtract:
-                self.Detect.trigger_camera()    # Trigger camera 
-                self.BB.MOT_on()
+            
+            self.Detect.arm()
+            
+            delay(800*ms)
+            
+            # # prepare scanned probe frequency
+            # fnew = self.BB.Probe_AOM_frequency + ii/len(self.x)*4.
+            # delay(1*ms)
+            # # self.BB.set_Probe_aom_frequency(fnew)
+            # self.BB.reinit_Probe_aom(15.0,fnew*1e6)
+            # delay(50*ms)
+            
+
+            delay(1*ms)
+            self.BB.MOT2D_off()  # turn off 2D MOT beam
+            delay(1*ms)
+            self.BB.Zeeman_off()
+            delay(1*ms)
+            
+            
+            # BACKGROUND IMAGE SEQUENCE
+               
+            if self.Background_subtract:
+                self.BB.reinit_MOT3DDP_aom(6.0, self.BB.f_MOT3D_detect)  # Set 3D MOT frequency for imaging
+                delay(10*ms)
+                self.BR.repumpers_on() # turn on repumpers
+                self.Detect.trigger_camera()    # Trigger camera
+                self.BB.MOT_on() #turn on mot for background image
                 delay(self.Detection_pulse_time)
                 self.BB.MOT_off()
+            
+                
                 delay(self.Detect.Exposure_Time)
+                self.BR.repumpers_off() # turn off repumpers
                 self.Detect.acquire()     # Acquire images
+                delay(100*ms)
+                
                 self.Detect.transfer_background_image(ii)
-           delay(500*ms)
+                delay(300*ms)
+            ############################
            
-           self.BB.reinit_MOT3DDP_aom(self.BB.MOT3DDP_iatten, self.BB.f_MOT3D_load) # switch to detection frequency
-           self.MC.Blackman_ramp_up()
-           self.BB.MOT2D_on()                # Turn on atom beam
-           self.BB.MOT_on()
+            #prepare for detection image
+              
+            self.Detect.arm()
+            delay(300*ms)
+
+            self.BB.reinit_MOT3DDP_aom(self.BB.MOT3DDP_iatten, self.BB.f_MOT3D_load)  # Set 3D MOT frequency for loading
+            delay(1*ms)
+
+            delay(1*ms)
+            self.BR.repumpers_on() # turn on repumpers
+            delay(1*ms)
+            self.MC.Blackman_ramp_up()
+            delay(1*ms)
+            self.BB.Zeeman_on()
+            delay(1*ms)
+            self.BB.MOT2D_on() # Turn on atom beam
+            delay(1*ms)
+            self.BB.MOT_on()
+            
+            delay(1*ms)
+            self.MC.flat()
+            
+            #self.MC.Linear_ramp(4,7,self.x[ii],30)
+            
+            with parallel:
+                self.BB.Zeeman_off()
+                self.BB.MOT2D_off() # turn off atom beam
+                self.BB.MOT_off() #turn off 3D 
+                self.BB.reinit_MOT3DDP_aom(6.0, self.BB.f_MOT3D_detect) # switch to detection frequency
+                #self.MC.Blackman_ramp_down_from_to(3.0,0.1)
+                self.MC.Set_current(0.0) #ramp down Blue mot coils 
            
-           delay(self.x[ii])                                     # Delay duration 
-           self.Detect.arm()
-           
-           delay(1*ms)
-           with parallel:
-               self.BB.MOT2D_off()
-               self.Detect.trigger_camera()                               # Trigger camera
-               self.BB.reinit_MOT3DDP_aom(self.Detection_attenuation, self.BB.f_MOT3D_detect) # switch to detection frequency
-           delay(self.Detection_pulse_time/2)
-           self.sampler0.sample_mu(smp)
-           delay(self.Detection_pulse_time/2)
-           self.BB.MOT_off()
-           delay(self.Detect.Exposure_Time)
-           delay(5*ms)
-           
-           self.Detect.acquire()                                # Acquire images
-           delay(100*ms)
-           self.MC.Blackman_ramp_down()
-           self.Detect.transfer_image_background_subtracted(ii)
-           delay(500*ms)
-                             # Disarm camera   
-                  
-           self.BR.Repumpers_aom_off() # turn off repumpers
-           self.Detect.disarm() 
+            #delay(self.x[ii])  # Delay
+  
+            # IMAGING SEQUENCE
+            #self.BR.repumpers_on() # turn on repumpers
+            self.Detect.trigger_camera()  # Trigger 
+            self.BB.MOT_on()
+            delay(self.Detection_pulse_time)
+            self.BB.MOT_off()
+            delay(self.Detect.Exposure_Time)
+            self.BR.repumpers_off() # turn off repumpers
+            ###########################
+            self.MC.Set_current(0.0)
+            
+            self.Detect.acquire()                                # Acquire images
+            delay(100*ms)
+            self.Detect.transfer_image_background_subtracted(ii)
+            delay(100*ms)
+            self.Detect.disarm() 
           
-           self.mutate_dataset("time_delay",ii,self.x[ii])
-           self.mutate_dataset("detection.index",ii,ii)
-           self.mutate_dataset("PDsignal",ii,smp[0])
+            self.mutate_dataset("time_delay",ii,self.x[ii])
+            self.mutate_dataset("detection.index",ii,ii)
            
         
         delay(200*ms)   

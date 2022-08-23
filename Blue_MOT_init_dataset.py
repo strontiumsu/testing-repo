@@ -33,6 +33,10 @@ class Blue_MOT_init_dataset(EnvExperiment):
          self.setattr_argument("Zeeman_attenuation", NumberValue(13.5,min=1.0,max=30.0),"Zeeman")
          self.setattr_argument("Zeeman_DDS_amplitude_scale", NumberValue(0.8,min=0.0,max=0.9),"Zeeman")
          
+         # Push
+         self.setattr_argument("Probe_push_frequency", NumberValue(40.*1e6,min=30*1e6,max=50.*1e6,scale=1e6,
+                          unit="MHz"),"Probe")
+         
     @kernel    
     def run(self):
          self.core.reset()
@@ -49,5 +53,5 @@ class Blue_MOT_init_dataset(EnvExperiment):
          self.set_dataset("blue_MOT.attenuationZeeman",self.Zeeman_attenuation, broadcast=True)
          self.set_dataset("blue_MOT.amplitude_scaleZeeman",self.Zeeman_DDS_amplitude_scale, broadcast=True)
          
-
+         self.set_dataset("blue_MOT.f_push", self.Probe_push_frequency, broadcast=True)
          

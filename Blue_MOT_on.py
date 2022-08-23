@@ -48,7 +48,7 @@ class Blue_MOT_on(EnvExperiment):
         #self.ttl5.on()
         self.MC.init_DAC()   # Initialize MOT coil DAC
         self.BB.init_aoms()  # Initialize AOMs
-        self.BR.init_aoms()
+        self.BB.Probe_AOM_off()
         self.BB.MOT_on()
         # Main loop
         self.BR.repumper_3P0_on()

@@ -16,14 +16,14 @@ Created on Tue Feb 15 21:19:34 2022
 
 from artiq.experiment import *
 import numpy as np    
-from three_photon import* 
+from ThreePhoton689Class import* 
 
 class Three_photon_test(EnvExperiment):
     
     
     def build(self): 
         self.setattr_device("core")
-        self.th_ph=three_photon(self)
+        self.th_ph=ThreePhoton689(self)
       
     def prepare(self):  
         

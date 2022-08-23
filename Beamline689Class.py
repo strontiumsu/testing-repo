@@ -26,12 +26,12 @@ class Beamline689(EnvExperiment):
         
         self.setattr_argument("repumper_3P0_frequency",NumberValue(200*1e6,min=195*1e6,max=205*1e6,scale=1e6,unit='MHz'),"3P0_repumper")
         self.setattr_argument("repumper_3P0_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.9),"3P0_repumper")
-        self.setattr_argument("repumper_3P0_Urukul_attenuation",NumberValue(12,min=8.0,max=30.0),"3P0_repumper")
+        self.setattr_argument("repumper_3P0_Urukul_attenuation",NumberValue(12,min=0.0,max=30.0),"3P0_repumper")
         
         
         self.setattr_argument("repumper_3P2_frequency",NumberValue(100*1e6,min=100*1e6,max=110*1e6,scale=1e6,unit='MHz'),"3P2_repumper")
         self.setattr_argument("repumper_3P2_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.8),"3P2_repumper")
-        self.setattr_argument("repumper_3P2_Urukul_attenuation",NumberValue(9,min=6,max=30.0),"3P2_repumper")
+        self.setattr_argument("repumper_3P2_Urukul_attenuation",NumberValue(9,min=0.0,max=30.0),"3P2_repumper")
 
         # 688
         
@@ -60,7 +60,6 @@ class Beamline689(EnvExperiment):
         self.repumper_3P2_dds_scale=self.repumper_3P2_DDS_amplitude_scale
         self.repumper_3P2_iatten=self.repumper_3P2_Urukul_attenuation
         
-        
         self.Hp688_dds_scale=self.Hp688_DDS_amplitude_scale
         self.Hp688_iatten=self.Hp688_Urukul_attenuation
 
@@ -76,23 +75,23 @@ class Beamline689(EnvExperiment):
         #self.urukul_hmc_ref_Red_MOT.set_att(self.Red_MOT_iatten)
         #self.urukul_hmc_ref_Red_MOT.sw.on()
         
-        
+        delay(10*ms)
         self.urukul_hmc_ref_3P0_repumper.init()
         self.urukul_hmc_ref_3P0_repumper.set_mu(0x40000000, asf=self.urukul_hmc_ref_3P0_repumper.amplitude_to_asf(self.repumper_3P0_dds_scale))
         self.urukul_hmc_ref_3P0_repumper.set_att(self.repumper_3P0_iatten)
         self.urukul_hmc_ref_3P0_repumper.sw.on()
-        
+        delay(10*ms)
         self.urukul_hmc_ref_3P2_repumper.init()
         self.urukul_hmc_ref_3P2_repumper.set_mu(0x40000000, asf=self.urukul_hmc_ref_3P2_repumper.amplitude_to_asf(self.repumper_3P2_dds_scale))
         self.urukul_hmc_ref_3P2_repumper.set_att(self.repumper_3P2_iatten)
         self.urukul_hmc_ref_3P2_repumper.sw.on()
-        
+        delay(10*ms)
         
         self.urukul_hmc_ref_Hp688.init()
         self.urukul_hmc_ref_Hp688.set_mu(0x40000000, asf=self.urukul_hmc_ref_Hp688.amplitude_to_asf(self.Hp688_dds_scale))
         self.urukul_hmc_ref_Hp688.set_att(self.Hp688_iatten)
         self.urukul_hmc_ref_Hp688.sw.on()
-
+        delay(10*ms)
         
         urukul_ch =self.urukul_meas[0]
         urukul_ch.init()
@@ -100,7 +99,7 @@ class Beamline689(EnvExperiment):
         urukul_ch.set_mu(dds_ftw_3P0_repumper, asf=urukul_ch.amplitude_to_asf(self.repumper_3P0_dds_scale))
         urukul_ch.set_att(self.repumper_3P0_iatten)
         urukul_ch.sw.on() 
-        
+        delay(10*ms)
         
         urukul_ch =self.urukul_meas[1]
         urukul_ch.init()
@@ -108,7 +107,7 @@ class Beamline689(EnvExperiment):
         urukul_ch.set_mu(dds_ftw_3P2_repumper, asf=urukul_ch.amplitude_to_asf(self.repumper_3P2_dds_scale))
         urukul_ch.set_att(self.repumper_3P2_iatten)
         urukul_ch.sw.on() 
-        
+        delay(10*ms)
         
         urukul_ch =self.urukul_meas[2]
         urukul_ch.init()
@@ -116,7 +115,7 @@ class Beamline689(EnvExperiment):
         urukul_ch.set_mu(dds_ftw_Hp688, asf=urukul_ch.amplitude_to_asf(self.Hp688_dds_scale))
         urukul_ch.set_att(self.Hp688_iatten)
         urukul_ch.sw.on() 
-        
+        delay(10*ms)
         
          
     ####################################################

@@ -44,16 +44,26 @@ class Beamline461(EnvExperiment):
         self.setattr_argument("MOT2D_Urukul_attenuation",NumberValue(11.5,min=1.0,max=30.0),"MOT2D")
         
         
+        # Probe AOM 
+        #self.setattr_argument("Probe_AOM_frequency",
+        #    Scannable(default=[RangeScan(30*1e6, 50*1e6, 1, randomize=False),NoScan(40*1e6)],scale=1e6,
+        #              unit="MHz"),"Probe_AOM")
+        self.setattr_argument("Probe_AOM_frequency",NumberValue(40*1e6,min=10*1e6,max=60*1e6,scale=1e6,unit='MHz'),"Probe_AOM")
+        self.setattr_argument("Probe_AOM_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.99),"Probe_AOM")
+        self.setattr_argument("Probe_AOM_Urukul_attenuation",NumberValue(11.5,min=0.0,max=30.0),"Probe_AOM")
+        
+        
 
         self.urukul_hmc_ref_MOT2D = self.get_device("urukul1_ch0")
         self.urukul_hmc_ref_MOT3DDP = self.get_device("urukul1_ch1")
         self.urukul_hmc_ref_Zeeman = self.get_device("urukul1_ch2")
-        #self.urukul_hmc_ref_probeDP = self.get_device("urukul1_ch3")
+        self.urukul_hmc_ref_Probe_AOM = self.get_device("urukul1_ch3")
         
-        self.urukul_meas = [self.get_device("urukul1_ch0"),self.get_device("urukul1_ch1"),self.get_device("urukul1_ch2")]
+        self.urukul_meas = [self.get_device("urukul1_ch0"),self.get_device("urukul1_ch1"),self.get_device("urukul1_ch2"),self.get_device("urukul1_ch3")]
         
         self.f_MOT3D_load=self.get_dataset('blue_MOT.f_load3D')
         self.f_MOT3D_detect=self.get_dataset('blue_MOT.f_detect')
+        self.f_push=self.get_dataset('blue_MOT.f_push')
         
     def set_atten_ZS(self):   # set the DDS amplitude and attenuation for the Zeeman slower only
         self.Zeeman_dds_scale=self.Zeeman_DDS_amplitude_scale
@@ -70,46 +80,54 @@ class Beamline461(EnvExperiment):
         else:    
             self.MOT3DDP_dds_scale=self.MOT3DDP_DDS_amplitude_scale
             self.MOT3DDP_iatten=self.MOT3DDP_Urukul_attenuation
+            
+    def set_atten_Probe_AOM(self):   # set the DDS amplitude and attenuation for the Zeeman slower only
+        self.Probe_AOM_dds_scale=self.Probe_AOM_amplitude_scale
+        self.Probe_AOM_iatten=self.Probe_AOM_Urukul_attenuation
     
     def set_atten(self):
         self.Zeeman_dds_scale=self.Zeeman_DDS_amplitude_scale
         self.MOT2D_dds_scale=self.MOT2D_DDS_amplitude_scale
         self.MOT3DDP_dds_scale=self.MOT3DDP_DDS_amplitude_scale
-        #self.probeDP_dds_scale=self.ProbeDP_DDS_amplitude_scale
+        self.Probe_AOM_dds_scale=self.Probe_AOM_DDS_amplitude_scale
            
         self.Zeeman_iatten=self.Zeeman_Urukul_attenuation
         self.MOT2D_iatten=self.MOT2D_Urukul_attenuation
         self.MOT3DDP_iatten=self.MOT3DDP_Urukul_attenuation
-        #self.probeDP_iatten=self.ProbeDP_Urukul_attenuation
+        self.Probe_AOM_iatten=self.Probe_AOM_Urukul_attenuation
         
     @kernel    
     def init_aoms(self):
         
         delay(1*ms)
         self.urukul1_cpld.init()
+        
+        delay(10*ms)
 
         self.urukul_hmc_ref_MOT3DDP.init()
         self.urukul_hmc_ref_MOT3DDP.set_mu(0x40000000, asf=self.urukul_hmc_ref_MOT3DDP.amplitude_to_asf(self.MOT3DDP_dds_scale))
         self.urukul_hmc_ref_MOT3DDP.set_att(self.MOT3DDP_iatten)
         self.urukul_hmc_ref_MOT3DDP.sw.on()
-            
+        
+        delay(10*ms)
             
         self.urukul_hmc_ref_Zeeman.init()
         self.urukul_hmc_ref_Zeeman.set_mu(0x40000000, asf=self.urukul_hmc_ref_Zeeman.amplitude_to_asf(self.Zeeman_dds_scale))
         self.urukul_hmc_ref_Zeeman.set_att(self.Zeeman_iatten)
         self.urukul_hmc_ref_Zeeman.sw.on()
 
+        delay(10*ms)
             
         self.urukul_hmc_ref_MOT2D.init()
         self.urukul_hmc_ref_MOT2D.set_mu(0x40000000, asf=self.urukul_hmc_ref_MOT2D.amplitude_to_asf(self.MOT2D_dds_scale))
         self.urukul_hmc_ref_MOT2D.set_att(self.MOT2D_iatten)
         self.urukul_hmc_ref_MOT2D.sw.on()
             
-            
-        # self.urukul_hmc_ref_probeDP.init()
-        # self.urukul_hmc_ref_probeDP.set_mu(0x40000000, asf=self.urukul_hmc_ref_probeDP.amplitude_to_asf(self.probeDP_dds_scale))
-        # self.urukul_hmc_ref_probeDP.set_att(self.probeDP_iatten)
-        # self.urukul_hmc_ref_probeDP.sw.on()
+        delay(10*ms)    
+        self.urukul_hmc_ref_Probe_AOM.init()
+        self.urukul_hmc_ref_Probe_AOM.set_mu(0x40000000, asf=self.urukul_hmc_ref_Probe_AOM.amplitude_to_asf(self.Probe_AOM_dds_scale))
+        self.urukul_hmc_ref_Probe_AOM.set_att(self.Probe_AOM_iatten)
+        self.urukul_hmc_ref_Probe_AOM.sw.on()
         
         
         
@@ -121,7 +139,8 @@ class Beamline461(EnvExperiment):
         urukul_ch.set_mu(dds_ftw_Zeeman, asf=urukul_ch.amplitude_to_asf(self.Zeeman_dds_scale))
         urukul_ch.set_att(self.Zeeman_iatten)
         urukul_ch.sw.on()
-                            
+        
+        delay(10*ms)                    
                 
         urukul_ch =self.urukul_meas[0]
         urukul_ch.init()
@@ -133,7 +152,8 @@ class Beamline461(EnvExperiment):
         urukul_ch.set_att(self.MOT2D_iatten)
         urukul_ch.sw.on() 
             
-       
+        delay(10*ms)
+        
         urukul_ch =self.urukul_meas[1]
         urukul_ch.init() 
         
@@ -144,6 +164,19 @@ class Beamline461(EnvExperiment):
         urukul_ch.set_att(self.MOT3DDP_iatten)
         urukul_ch.sw.on()
         
+        delay(10*ms)
+        
+        urukul_ch =self.urukul_meas[3]
+        urukul_ch.init()
+
+        fProbe_AOM = self.Probe_AOM_frequency
+        dds_ftw_Probe_AOM=self.urukul_meas[3].frequency_to_ftw(fProbe_AOM)
+                
+        urukul_ch.set_mu(dds_ftw_Probe_AOM, asf=urukul_ch.amplitude_to_asf(self.Probe_AOM_dds_scale))
+        urukul_ch.set_att(self.Probe_AOM_iatten)
+        urukul_ch.sw.on() 
+            
+        delay(10*ms)
     @kernel    
     def reinit_MOT3DDP_aom(self, user_atten, user_freq):
         
@@ -174,6 +207,23 @@ class Beamline461(EnvExperiment):
         #urukul_ch =self.urukul_meas[1]
         #urukul_ch.set_mu(dds_ftw_MOT3DDP, asf=urukul_ch.amplitude_to_asf(self.MOT3DDP_dds_scale))
         self.urukul_meas[1].set_att(user_atten) 
+        
+    @kernel    
+    def reinit_Probe_aom(self, user_atten, user_freq):
+        
+        urukul_ch = self.urukul_meas[3]
+        delay(100*ms)
+        urukul_ch.set_att(user_atten) 
+        delay(100*ms)
+        urukul_ch.set_mu(urukul_ch.frequency_to_ftw(user_freq), asf=urukul_ch.amplitude_to_asf(self.Probe_AOM_dds_scale))
+        delay(100*ms)
+        
+    @kernel 
+    def set_Probe_aom_frequency(self, freq): 
+      
+        urukul_ch =self.urukul_meas[3]
+        dds_ftw_Probe_AOM=self.urukul_meas[3].frequency_to_ftw(freq*1e6)
+        urukul_ch.set_mu(dds_ftw_Probe_AOM, asf=urukul_ch.amplitude_to_asf(self.Probe_AOM_dds_scale)) 
         
     @kernel 
     def shift_MOT2D_aom_frequency(self,df): 
@@ -206,7 +256,7 @@ class Beamline461(EnvExperiment):
     @kernel
     def MOT_off(self):    
         urukul_ch =self.urukul_meas[1]
-        urukul_ch.sw.off() 
+        urukul_ch.sw.off()        
         
     @kernel
     def MOT2D_on(self):    
@@ -230,7 +280,15 @@ class Beamline461(EnvExperiment):
         urukul_ch.sw.off()
  
         
+    @kernel
+    def Probe_AOM_on(self):    
+        urukul_ch =self.urukul_meas[3]
+        urukul_ch.sw.on()  
         
+    @kernel
+    def Probe_AOM_off(self):    
+        urukul_ch =self.urukul_meas[3]
+        urukul_ch.sw.off()    
         
         
         

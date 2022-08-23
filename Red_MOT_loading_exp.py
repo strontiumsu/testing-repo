@@ -21,6 +21,7 @@ class Red_MOT_loading(EnvExperiment):
     def build(self): 
         self.setattr_device("core")
         self.setattr_device("ttl5")
+        self.setattr_device("ttl6")
 
         self.setattr_device("ttl7")
         self.Detect=Detection(self)
@@ -46,8 +47,8 @@ class Red_MOT_loading(EnvExperiment):
                       unit="ms"),"Detection")
         
         self.setattr_argument("Delay_duration",
-            Scannable(default=[RangeScan(0.0*1e-3, 500.0*1e-3, 20, randomize=False),NoScan(0.0)],scale=1e-3,
-                      unit="ms"),"Loading")
+            Scannable(default=[RangeScan(0.0*1e-3, 50.0*1e-3, 20, randomize=False),NoScan(0.0)],scale=1e-3,
+                      unit="ms"),"Detection")
         
         self.setattr_argument("Background_subtract",BooleanValue(False),"Loading")
             
@@ -100,6 +101,10 @@ class Red_MOT_loading(EnvExperiment):
         delay(1*ms)
         self.BB.Zeeman_off()
         delay(1*ms)
+        self.BB.Probe_AOM_off()
+        delay(1*ms)
+        self.ttl6.off() #start on red mot modulation channel
+        delay(1*ms)
        
         # Main loop
         for ii in range(len(self.x)):
@@ -119,27 +124,21 @@ class Red_MOT_loading(EnvExperiment):
             delay(1*ms)
             
             
-            # BACKGROUND IMAGE SEQUENCE
+           # BACKGROUND IMAGE SEQUENCE
             if self.Background_subtract:
                 self.BB.reinit_MOT3DDP_aom(6.0, self.BB.f_MOT3D_detect)  # Set 3D MOT frequency for imaging
                 delay(10*ms)
-                #self.ttl7.off() #turn on red beam for background image
-                #delay(5*ms)
-                
+                self.BR.repumpers_on() # turn on repumpers
                 self.Detect.trigger_camera()    # Trigger camera
-                #delay(1*ms)
                 self.BB.MOT_on() #turn on mot for background image
                 delay(self.Detection_pulse_time)
                 self.BB.MOT_off()
-                
                 delay(self.Detect.Exposure_Time)
+                self.BR.repumpers_off() # turn off repumpers
                 self.Detect.acquire()     # Acquire images
                 delay(100*ms)
                 self.Detect.transfer_background_image(ii)
                 delay(300*ms)
-                
-                #self.ttl7.on()
-                #delay(5*ms)
             ############################
 
             #prepare for detection image
@@ -177,33 +176,25 @@ class Red_MOT_loading(EnvExperiment):
             delay(self.Bottom_delay)
             self.BR.repumpers_off() # turn off repumpers
             self.MC.Linear_ramp(self.Bottom_current_amplitude,self.Red_current_amplitude,Lin_ramp_time,30)
-            
-            
-            #delay(self.x[ii])  # Delay
-            #delay(1.5*ms)
-            # swith 689 to single frequency
-            #self.BR.reinit_Red_MOT_aom(20.0, self.BR.Red_MOT_AOM_frequency) # switch to detection frequency
-            #delay(self.Red_pulse_duration)
-            
-            
-            #self.BR.Red_MOT_aom_off() # turn off red MOT beam
-            self.ttl5.on()
-            #self.MC.Set_current(0.0)
+
+            #self.ttl5.on() #turn off modulation channel
+            with parallel:
+                self.ttl5.on() #turn off modulation channel
+                self.ttl6.on() #switch to single-frequency channel
+            delay(self.Red_pulse_duration) #single frequency stage time
+            self.ttl6.off() #switch back to mod channel (which is off)
+
             
             delay(self.x[ii])  # Delay
-            
-            # IMAGING SEQUENCE
+
+             # IMAGING SEQUENCE
             self.BR.repumpers_on() # turn on repumpers
             self.Detect.trigger_camera()  # Trigger 
-            #delay(1*ms)
-            
             self.BB.MOT_on()
             delay(self.Detection_pulse_time)
             self.BB.MOT_off()
             delay(self.Detect.Exposure_Time)
             self.BR.repumpers_off() # turn off repumpers
-            #self.BB.MOT_off()
-            #delay(5*ms)
             ###########################
             self.MC.Set_current(0.0)
             
@@ -217,8 +208,10 @@ class Red_MOT_loading(EnvExperiment):
             self.mutate_dataset("detection.index",ii,ii)
             
             
-            self.Detect.calc_marginal_stats(ii)
+            #self.Detect.calc_marginal_stats(ii)
            
            
         delay(500*ms)   
         self.MC.Zero_current()  
+        
+    

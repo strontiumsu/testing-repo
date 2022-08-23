@@ -7,16 +7,14 @@ Created on Thu Jul  1 12:17:03 2021
 
 from artiq.experiment import *
 import numpy as np
-from fit_image import Fit2DGaussParabola
+
    
 
 class Detection(EnvExperiment):
     def build(self):
-
         self.setattr_device("core") 
         self.setattr_device("ttl4")         # Camera hardware trigger
         self.cam=self.get_device("camera")  # Thorlabs camera
-        
         self.setattr_argument("Exposure_Time",NumberValue(25*1e-3,min=1*1e-3,max=100*1e-3,scale=1e-3,
                       unit="ms"),"Detection")
         
@@ -25,7 +23,7 @@ class Detection(EnvExperiment):
         
         #self.setattr_argument("N_reps",NumberValue(2000,min=1,max=2000, ndecimals = 0, scale = 1,step=1,type='int'),"Detection")
         
-
+       
         
         
     @kernel
@@ -34,27 +32,28 @@ class Detection(EnvExperiment):
        delay(1*ms)
        self.ttl4.off()  
        
-       
-       
+              
     @kernel
     def kernel_delay(self,t):
         delay(t)        
         
-    
-    
-    def arm(self):
-        self.cam.arm(1)
+       
+    def arm(self):   
+        self.cam.arm(2)
         
     def acquire(self):
         self.cam.acquire()
         
+    def get_is_armed(self):
+        return self.cam.get_is_armed()
     
     def camera_init(self):
-           self.cam.disarm() 
+           #self.cam.dispose()
+           #self.cam.disarm() 
            self.cam.set_exposure(self.Exposure_Time)
            self.cam.set_gain(self.Hardware_gain)
-           self.cam.set_roi(1225,1050,200,200)
-           #self.cam.frames_per_trigger_zero_for_unlimited = 0
+           self.cam.set_roi(1150,1075,100,150)
+           # self.cam.frames_per_trigger_zero_for_unlimited = 0
  
     def prep_datasets(self,x):
             self.set_dataset("detection.index",x, broadcast=True)
@@ -63,11 +62,16 @@ class Detection(EnvExperiment):
             self.set_dataset("detection.background_subtracted_image_sum", x, broadcast=True)
             self.set_dataset("detection.deviationx", x, broadcast=True)
             self.set_dataset("detection.deviationy", x, broadcast=True)
+            self.set_dataset("detection.Probup", x, broadcast=True)
+            
+            # self.set_dataset("detection.image", x, broadcast=True)
+            # self.set_dataset("detection.background_subtracted_image", x, broadcast=True)
         
      
     def transfer_background_image(self,i):
                 self.background_image=np.copy(self.cam.get_all_images()[0])
-                self.set_dataset("detection.background_image", self.background_image, broadcast=True)
+                
+                self.set_dataset("detection.images.background_image", self.background_image, broadcast=True)
                 self.mutate_dataset("detection.background_image_sum",i,np.sum(self.background_image))
                 self.cam.disarm()
                 
@@ -75,28 +79,68 @@ class Detection(EnvExperiment):
     
     def transfer_image(self,i):
                 image_buffer_copy1 = np.copy(self.cam.get_all_images()[0])
-             
-                #self.mutate_dataset("index",i, i)
+
                 self.mutate_dataset("detection.image_sum", i, np.sum(image_buffer_copy1))
-                self.set_dataset("detection.image", image_buffer_copy1, broadcast=True)
-                
+                self.set_dataset("detection.images.image", image_buffer_copy1, broadcast=True)
                 self.cam.disarm()
                 
     def transfer_image_background_subtracted(self,i):
                 self.image_buffer_copy1=np.copy(self.cam.get_all_images()[0])
                 self.background_free_image= np.subtract(self.image_buffer_copy1,self.background_image,dtype=np.int16)
-                
-                self.background_free_image=np.where(self.background_free_image<0, 0, self.background_free_image)
+
+                self.background_free_image_display=np.where(self.background_free_image<0, 0, self.background_free_image)
                 self.mutate_dataset("detection.image_sum", i, np.sum(self.image_buffer_copy1))
-                self.set_dataset("detection.image", self.image_buffer_copy1, broadcast=True)
-                
-                #self.mutate_dataset("index",i, i)
+                self.set_dataset("detection.images.image", self.image_buffer_copy1, broadcast=True)
                 
                 self.mutate_dataset("detection.background_subtracted_image_sum",i, np.sum(self.background_free_image))
-                self.set_dataset("detection.background_subtracted_image", self.background_free_image, broadcast=True)
-                
+                self.set_dataset("detection.images.background_subtracted_image", self.background_free_image_display, broadcast=True)
+                self.set_dataset(f"detection.images.background_subtracted_image{i}", self.background_free_image_display, broadcast=True)
                 self.cam.disarm()     
+        
   
+    def calc_push_stats(self,i):
+        
+        x1 = 55
+        x2 = 120
+        x3 = 150
+        y1 = 45
+        y2 = 95
+        
+        noise = np.mean(self.background_free_image[x3+20:x3+70,y1:y2])
+        #print(noise)
+        
+        num1S0 = np.sum(self.background_free_image[x1:x2,y1:y2])#-(x2-x1)*(y2-y1)*noise
+        num3P1 = np.sum(self.background_free_image[x2:x3,y1:y2])#-(x3-x2)*(y2-y1)*noise
+        
+        if num1S0 <= 0:
+            num1S0 = 1
+        if num3P1 <= 0:
+            num3P1 = 1
+        
+        #print(["1S0 data:",noise,(x2-x1)*(y2-y1)*noise,np.sum(self.background_free_image[x1:x2,y1:y2]),num1S0])
+        #print(["3P1 data:",noise,(x3-x2)*(y2-y1)*noise,np.sum(self.background_free_image[x2:x3,y1:y2]),num3P1])
+        
+
+        self.background_free_image_display[x2:x3,y1]=300
+        self.background_free_image_display[x2:x3,y2]=300
+        self.background_free_image_display[x2,y1:y2]=300
+        self.background_free_image_display[x3,y1:y2]=300
+        
+        self.background_free_image_display[x1:x2,y1]=300
+        self.background_free_image_display[x1:x2,y2]=300
+        self.background_free_image_display[x1,y1:y2]=300
+        self.background_free_image_display[x2,y1:y2]=300
+        
+        # if i == 0:
+        #     self.set_dataset("detection.maxContrast",num3P1/(num3P1+num1S0),broadcast=True)
+
+        self.set_dataset("detection.images.background_subtracted_image", self.background_free_image_display, broadcast=True)
+        self.mutate_dataset("detection.Probup", i, num3P1/(num3P1+num1S0))
+        #self.mutate_dataset("detection.Probup", i,( num3P1/(num3P1+num1S0) - 0.0441786826544748)/ 0.873846684266737)
+        
+        #print(len(np.transpose(self.background_free_image)[1]))
+        #print(self.background_free_image[50:60,50:60]) 
+        
                 
     def calc_marginal_stats(self,i):
         tot = np.sum(self.background_free_image)
@@ -170,7 +214,7 @@ class Detection(EnvExperiment):
                 
     def disarm(self):
         self.cam.disarm()
-        #self.cam.dispose()
+        self.cam.dispose()
         
         
         

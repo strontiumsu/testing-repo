@@ -51,6 +51,10 @@ class Blue_MOT_on_DC(EnvExperiment):
         self.BB.init_aoms()  # Initialize AOMs
         self.BR.init_aoms()
         self.BB.MOT_on()
+        
+        #self.BB.Probe_AOM_on()
+        self.BB.Probe_AOM_off()
+        
         # Main loop
         
         self.BR.repumper_3P0_off()
@@ -76,6 +80,12 @@ class Blue_MOT_on_DC(EnvExperiment):
             #    self.BB.set_MOT3DDP_aom_atten(6.0+3*float(jj/500))
             #    delay(1*ms)
         self.MC.flat()
+        
+        # for i in range(1000):
+        #     self.BB.Probe_AOM_on()
+        #     delay(20*ms)
+        #     self.BB.Probe_AOM_off()
+        #     delay(1000*ms)
             
         
         self.ttl5.off()
