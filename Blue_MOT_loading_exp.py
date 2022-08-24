@@ -118,7 +118,6 @@ class Blue_MOT_loading(EnvExperiment):
                 self.Detect.acquire()     # Acquire images
                 delay(100*ms)
                 
-                self.Detect.transfer_background_image(ii)
                 delay(300*ms)
             ############################
            
