@@ -48,8 +48,8 @@ class Detection(EnvExperiment):
         return self.cam.get_is_armed()
     
     def camera_init(self):
-           #self.cam.dispose()
-           #self.cam.disarm() 
+          
+           
            self.cam.set_exposure(self.Exposure_Time)
            self.cam.set_gain(self.Hardware_gain)
            self.cam.set_roi(1150,1075,100,150)
@@ -214,7 +214,11 @@ class Detection(EnvExperiment):
                 
     def disarm(self):
         self.cam.disarm()
-        self.cam.dispose()
         
+        
+    def dispose(self):  
+       self.cam.dispose()
+        
+       
         
         

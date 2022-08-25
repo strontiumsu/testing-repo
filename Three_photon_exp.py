@@ -183,6 +183,7 @@ class Three_photon_Rabi_flopping(EnvExperiment):
                 delay(100*ms)
                 self.Detect.transfer_background_image(ii)
                 delay(300*ms)
+             
             ############################
 
             #prepare for detection image
@@ -281,7 +282,7 @@ class Three_photon_Rabi_flopping(EnvExperiment):
             delay(100*ms)
             self.Detect.transfer_image_background_subtracted(ii)
             delay(100*ms)
-            self.Detect.disarm() 
+             
           
             self.mutate_dataset("time_delay",ii,self.x[ii])
             self.mutate_dataset("detection.index",ii,ii)
