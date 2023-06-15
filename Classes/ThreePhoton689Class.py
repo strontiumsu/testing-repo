@@ -31,25 +31,25 @@ class _ThreePhoton689(EnvExperiment):
         self.setattr_device("urukul0_cpld")
         
         # Offset AOM
-        self.setattr_argument("switch1_689_3nu_frequency",NumberValue(80*1e6,scale=1e6,unit='MHz'),"Three_photon") 
+        self.setattr_argument("switch1_689_3nu_frequency",NumberValue(80.000*1e6,scale=1e6,unit='MHz',ndecimals=5),"Three_photon") 
         self.setattr_argument("switch1_689_3nu_DDS_amplitude_scale",NumberValue(0.8),"Three_photon")
         self.setattr_argument("switch1_689_3nu_DDS_attenuation",NumberValue(4.0),"Three_photon")
      
     
         # 679 DP AOM
         
-        self.setattr_argument("switch2_689_3nu_frequency",NumberValue(80*1e6,scale=1e6,unit='MHz'),"Three_photon") 
+        self.setattr_argument("switch2_689_3nu_frequency",NumberValue(80.000*1e6,scale=1e6,unit='MHz',ndecimals=5),"Three_photon") 
         self.setattr_argument("switch2_689_3nu_DDS_amplitude_scale",NumberValue(0.8),"Three_photon")
         self.setattr_argument("switch2_689_3nu_DDS_attenuation",NumberValue(9.0),"Three_photon")
         
         # 679 switch AOM
-        self.setattr_argument("switch3_689_3nu_frequency",NumberValue(80*1e6,scale=1e6,unit='MHz'),"Three_photon") # ramp duration
+        self.setattr_argument("switch3_689_3nu_frequency",NumberValue(80.000*1e6,scale=1e6,unit='MHz',ndecimals=5),"Three_photon") # ramp duration
         self.setattr_argument("switch3_689_3nu_DDS_amplitude_scale",NumberValue(0.8),"Three_photon")
         self.setattr_argument("switch3_689_3nu_DDS_attenuation",NumberValue(9.0),"Three_photon")
 
         # 689 DP AOM
         
-        self.setattr_argument("DP_689_AOM_frequency",NumberValue(80*1e6,scale=1e6,unit='MHz'),"Three_photon") # ramp duration
+        self.setattr_argument("DP_689_AOM_frequency",NumberValue(80.000*1e6,scale=1e6,unit='MHz'),"Three_photon") # ramp duration
         self.setattr_argument("DP_689_AOM_DDS_amplitude_scale",NumberValue(0.8),"Three_photon")
         self.setattr_argument("DP_689_AOM_DDS_attenuation",NumberValue(4.0),"Three_photon")
         
@@ -132,7 +132,7 @@ class _ThreePhoton689(EnvExperiment):
         
     @kernel    
     def set_switch1_phase_freq_profile(self,freq,ph,t,prof=0):
-        self.urukul_meas[0].set(freq,phase=ph,phase_mode = PHASE_MODE_TRACKING, ref_time_mu=t, profile = prof)
+        self.urukul_meas[0].set(freq, phase=ph,phase_mode = PHASE_MODE_TRACKING, ref_time_mu=t, profile = prof)
     @kernel    
     def set_switch2_phase_freq_profile(self,freq,ph,t,prof=0):
         self.urukul_meas[1].set(freq,phase=ph,phase_mode = PHASE_MODE_TRACKING, ref_time_mu=t, profile = prof)

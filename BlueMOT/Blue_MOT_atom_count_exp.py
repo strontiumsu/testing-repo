@@ -31,8 +31,7 @@ class Blue_MOT_atom_count(EnvExperiment):
         self.adc_0=self.get_device("sampler0")
         self.adc_data=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];
         
-        start_det, stop_det, points_det = 10*1e6, 50*1e6, 5
-        start_pow, stop_pow, points_pow = 1, 10, 10
+    
         
         # standard settings
         

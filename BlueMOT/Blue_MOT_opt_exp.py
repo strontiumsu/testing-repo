@@ -295,7 +295,7 @@ class Blue_MOT_opt(EnvExperiment):
             self.mutate_dataset("frequency",ii,self.scanning_var[ii])
             self.mutate_dataset("detection.index",ii,ii)
             
-            self.Detect.calc_marginal_stats(ii)
+            #self.Detect.calc_marginal_stats(ii)
                 
         ## Analyze data and update datasets
         ## Find frequency with maximum florescence and set data set to that value

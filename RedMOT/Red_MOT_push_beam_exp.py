@@ -98,7 +98,7 @@ class Red_MOT_push_beam(EnvExperiment):
         self.BB.Zeeman_off()
         delay(1*ms)
         self.BB.Probe_AOM_off()
-        self.BR.Hp688_aom_off()
+        self.BR.Hp688_aom_on()
         delay(1*ms)
 
        
@@ -170,18 +170,14 @@ class Red_MOT_push_beam(EnvExperiment):
             self.ttl6.off() #switch back to mod channel (which is off)
             self.MC.Set_current(0.0)
             
+            delay(500*us)
             with parallel:
-                with sequential:
-                    delay(498.75*us)
-                    with parallel:
-                        self.BR.repumpers_on() # turn on repumpers
-                        self.BB.Probe_AOM_on()
-                        self.BR.Hp688_aom_on()
-                    delay(self.Push_pulse_time+1.25*us)
-                    with parallel:
-                        self.BR.repumpers_off() # turn off repumpers
-                        self.BB.Probe_AOM_off()
-                        self.BR.Hp688_aom_off()
+                self.BR.repumpers_on() # turn on repumpers
+                self.BB.Probe_AOM_on()
+            delay(self.Push_pulse_time)
+            with parallel:
+                self.BR.repumpers_off() # turn off repumpers
+                self.BB.Probe_AOM_off()
             
             delay(self.x[ii])  # Delay
             

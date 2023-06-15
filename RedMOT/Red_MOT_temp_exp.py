@@ -86,7 +86,7 @@ class Red_MOT_temp(EnvExperiment):
         self.BB.init_aoms()
         self.BR.init_aoms()
         
-        Lin_ramp_time = 100*ms
+        Lin_ramp_time =100*ms
 
         # Prepare datasets
         

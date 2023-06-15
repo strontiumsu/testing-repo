@@ -41,6 +41,7 @@ class Blue_MOT_on_DC(EnvExperiment):
         self.MC.init_DAC()   # Initialize MOT coil DAC
         self.BB.init_aoms()  # Initialize AOMs
         self.BR.init_aoms()
+        self.BB.Probe_AOM_off()
         self.BB.MOT_on()
         
         if self.push_beam:

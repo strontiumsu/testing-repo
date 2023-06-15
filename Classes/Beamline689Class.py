@@ -5,8 +5,9 @@ Created on Wed Mar 30 18:37:28 2022
 @author: sr
 """
 
-from artiq.experiment import *
-import numpy as np
+
+from artiq.experiment import kernel, delay, EnvExperiment, NumberValue, ms
+
    
 
 
@@ -34,17 +35,24 @@ class _Beamline689(EnvExperiment):
 
         # 688
         
-        self.setattr_argument("Hp688_AOM_frequency",NumberValue(80*1e6,min=25*1e6,max=250*1e6,scale=1e6,unit='MHz'),"Hp688")
+        self.setattr_argument("Hp688_AOM_frequency",NumberValue(200*1e6,min=25*1e6,max=250*1e6,scale=1e6,unit='MHz'),"Hp688")
         self.setattr_argument("Hp688_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.8),"Hp688")
-        self.setattr_argument("Hp688_Urukul_attenuation",NumberValue(13,min=1.0,max=30.0),"Hp688")
+        self.setattr_argument("Hp688_Urukul_attenuation",NumberValue(6,min=1.0,max=30.0),"Hp688")
+        
+        # 813
+        
+        self.setattr_argument("dipole_AOM_frequency",NumberValue(100*1e6,min=25*1e6,max=250*1e6,scale=1e6,unit='MHz'),"dipole")
+        self.setattr_argument("dipole_DDS_amplitude_scale",NumberValue(0.8,min=0.0,max=0.8),"dipole")
+        self.setattr_argument("dipole_Urukul_attenuation",NumberValue(6,min=1.0,max=30.0),"dipole")
 
 
         self.urukul_hmc_ref_3P0_repumper = self.get_device("urukul2_ch0")
         self.urukul_hmc_ref_3P2_repumper = self.get_device("urukul2_ch1")
         
         self.urukul_hmc_ref_Hp688 = self.get_device("urukul2_ch2")
+        self.urukul_hmc_ref_dipole = self.get_device("urukul2_ch3")
         
-        self.urukul_meas = [self.get_device("urukul2_ch0"), self.get_device("urukul2_ch1"), self.get_device("urukul2_ch2")]
+        self.urukul_meas = [self.get_device("urukul2_ch0"), self.get_device("urukul2_ch1"), self.get_device("urukul2_ch2"), self.get_device("urukul2_ch3")]
 
                   
     def set_atten(self):
@@ -61,6 +69,10 @@ class _Beamline689(EnvExperiment):
         
         self.Hp688_dds_scale=self.Hp688_DDS_amplitude_scale
         self.Hp688_iatten=self.Hp688_Urukul_attenuation
+        
+        self.dipole_dds_scale=self.dipole_DDS_amplitude_scale
+        self.dipole_iatten=self.dipole_Urukul_attenuation
+
 
         
     @kernel    
@@ -92,6 +104,12 @@ class _Beamline689(EnvExperiment):
         self.urukul_hmc_ref_Hp688.sw.on()
         delay(10*ms)
         
+        self.urukul_hmc_ref_dipole.init()
+        self.urukul_hmc_ref_dipole.set_mu(0x40000000, asf=self.urukul_hmc_ref_dipole.amplitude_to_asf(self.dipole_dds_scale))
+        self.urukul_hmc_ref_dipole.set_att(self.dipole_iatten)
+        self.urukul_hmc_ref_dipole.sw.on()
+        delay(10*ms)
+        
         urukul_ch =self.urukul_meas[0]
         urukul_ch.init()
         dds_ftw_3P0_repumper=self.urukul_meas[0].frequency_to_ftw(self.repumper_3P0_frequency)   
@@ -113,6 +131,15 @@ class _Beamline689(EnvExperiment):
         dds_ftw_Hp688=self.urukul_meas[2].frequency_to_ftw(self.Hp688_AOM_frequency)   
         urukul_ch.set_mu(dds_ftw_Hp688, asf=urukul_ch.amplitude_to_asf(self.Hp688_dds_scale))
         urukul_ch.set_att(self.Hp688_iatten)
+        urukul_ch.sw.on() 
+        delay(10*ms)
+        
+        
+        urukul_ch =self.urukul_meas[3]
+        urukul_ch.init()
+        dds_ftw_dipole=self.urukul_meas[3].frequency_to_ftw(self.dipole_AOM_frequency)   
+        urukul_ch.set_mu(dds_ftw_dipole, asf=urukul_ch.amplitude_to_asf(self.dipole_dds_scale))
+        urukul_ch.set_att(self.dipole_iatten)
         urukul_ch.sw.on() 
         delay(10*ms)
         

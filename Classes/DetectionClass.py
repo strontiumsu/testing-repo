@@ -34,7 +34,8 @@ class _Detection(EnvExperiment):
         
        
     def arm(self):   
-        self.cam.arm(2)
+        if not self.get_is_armed():
+            self.cam.arm(2)
         
     def acquire(self):
         self.cam.acquire()
@@ -44,10 +45,10 @@ class _Detection(EnvExperiment):
     
     def camera_init(self):
           
-           
+           if self.get_is_armed(): self.disarm()
            self.cam.set_exposure(self.Exposure_Time)
            self.cam.set_gain(self.Hardware_gain)
-           self.cam.set_roi(1150,1075,100,150)
+           self.cam.set_roi(1160,1075,100,150)
            # self.cam.frames_per_trigger_zero_for_unlimited = 0
  
     def prep_datasets(self,x):
@@ -77,56 +78,32 @@ class _Detection(EnvExperiment):
                 image_buffer_copy1 = np.copy(self.cam.get_all_images()[0])
 
                 self.mutate_dataset("detection.image_sum", i, np.sum(image_buffer_copy1))
-                self.set_dataset("detection.images.image", image_buffer_copy1, broadcast=True)
+                self.set_dataset(f"detection.images.test_images.image{i}", image_buffer_copy1, broadcast=True)
                 self.cam.disarm()
                 
-    def transfer_image_background_subtracted(self,i):
+    def transfer_image_background_subtracted(self,i) -> TInt32:
                 self.image_buffer_copy1=np.copy(self.cam.get_all_images()[0])
                 self.background_free_image= np.subtract(self.image_buffer_copy1,self.background_image,dtype=np.int16)
 
                 self.background_free_image_display=np.where(self.background_free_image<0, 0, self.background_free_image)
                 self.mutate_dataset("detection.image_sum", i, np.sum(self.image_buffer_copy1))
                 self.set_dataset("detection.images.image", self.image_buffer_copy1, broadcast=True)
+                self.set_dataset(f"detection.images.image{i}", self.image_buffer_copy1, broadcast=True)
                 
                 self.mutate_dataset("detection.background_subtracted_image_sum",i, np.sum(self.background_free_image))
                 self.set_dataset("detection.images.background_subtracted_image", self.background_free_image_display, broadcast=True)
                 self.set_dataset(f"detection.images.background_subtracted_image{i}", self.background_free_image_display, broadcast=True)
-                self.cam.disarm()     
-        
-    def calc_rmot_stats(self,i):
-        
-        x2 = 120-30
-        x3 = 150+30
-        y1 = 45-30
-        y2 = 75+30
-        
-        noise = np.mean(self.background_free_image[x3+20:x3+70,y1:y2])
-        
-        numrmot = np.sum(self.background_free_image[x2:x3,y1:y2])-(x3-x2)*(y2-y1)*noise
-        
-        if numrmot <= 0:
-            numrmot = 1
-        
-        #print(["1S0 data:",noise,(x2-x1)*(y2-y1)*noise,np.sum(self.background_free_image[x1:x2,y1:y2]),num1S0])
-        #print(["3P1 data:",noise,(x3-x2)*(y2-y1)*noise,np.sum(self.background_free_image[x2:x3,y1:y2]),num3P1])
-        
-
-        self.background_free_image_display[x2:x3,y1]=200
-        self.background_free_image_display[x2:x3,y2]=200
-        self.background_free_image_display[x2,y1:y2]=200
-        self.background_free_image_display[x3,y1:y2]=200
-
-        self.set_dataset("detection.images.background_subtracted_image", self.background_free_image_display, broadcast=True)
-        self.mutate_dataset("detection.rmot_sum", i, numrmot)
+                self.cam.disarm()  
+                return int(np.sum(self.background_free_image))
 
    
     def calc_push_stats(self,i):
         
-        x1 = 79
-        x2 = 135
-        x3 = 165
-        y1 = 45
-        y2 = 95
+        x1 = 68
+        x2 = 123
+        x3 = 178
+        y1 = 40
+        y2 = 80
         
         noise = np.mean(self.background_free_image[x3+20:x3+70,y1:y2])
         #print(noise)
@@ -163,7 +140,20 @@ class _Detection(EnvExperiment):
         #print(len(np.transpose(self.background_free_image)[1]))
         #print(self.background_free_image[50:60,50:60]) 
         
-                
+    def calc_rmot_stats(self,i):
+        
+        x2 = 123
+        x3 = 158
+        y1 = 40
+        y2 = 70
+        
+        cnts = np.sum(self.background_free_image[x2:x3,y1:y2])#-(x3-x2)*(y2-y1)*noise
+        
+        self.mutate_dataset("detection.rmot_sum", i, cnts)
+        #self.mutate_dataset("detection.Probup", i,( num3P1/(num3P1+num1S0) - 0.0441786826544748)/ 0.873846684266737)
+        
+        #print(len(np.transpose(self.background_free_image)[1]))
+        #print(self.background_free_image[50:60,50:60])             
     def calc_marginal_stats(self,i):
         tot = np.sum(self.background_free_image)
         
