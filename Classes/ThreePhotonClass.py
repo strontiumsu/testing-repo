@@ -24,12 +24,12 @@ class _ThreePhoton(EnvExperiment):
         self.setattr_device('urukul0_cpld')
         
         # names for all our AOMs
-        self.AOMs = ['Beam1', 'Beam2', "Beam3", "ch3"]
+        self.AOMs = ['Beam1', 'Beam2', "Beam3", "688_shelf"]
        
         # default values for all params for all AOMs
         self.scales = [0.8, 0.8, 0.8, 0.8]     
-        self.attens = [7.0, 9.0, 9.0, 9.0]      
-        self.freqs = [84.0, 84.0, 84.0, 80.0]
+        self.attens = [7.0, 9.0, 9.0, 6.0]      
+        self.freqs = [84.0, 84.0, 84.0, 200.0]
    
         self.urukul_channels = [self.get_device("urukul0_ch0"),
                                 self.get_device("urukul0_ch1"),
@@ -52,13 +52,13 @@ class _ThreePhoton(EnvExperiment):
        
     def prepare_aoms(self):
         self.scales = [self.scale_Beam1, self.scale_Beam1, self.scale_Beam1, 
-                       self.scale_ch3]
+                       self.scale_688_shelf]
         
         self.attens = [self.atten_Beam1, self.atten_Beam2, self.atten_Beam3, 
-                       self.atten_ch3]
+                       self.atten_688_shelf]
 
         self.freqs = [self.freq_Beam1, self.freq_Beam2, self.freq_Beam3, 
-                       self.freq_ch3]
+                       self.freq_688_shelf]
         
         self.beams = []
         if self.Beam1_on: self.beams.append('Beam1')

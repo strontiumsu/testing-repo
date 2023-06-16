@@ -10,6 +10,11 @@ Desc: This file contains the class that controls all blue MOT methods (loading, 
 from artiq.experiment import RTIOUnderflow, EnvExperiment, NumberValue, delay, ms, sequential, kernel, TInt32, parallel, us
 import numpy as np
 
+import sys
+sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
+from NovaTechClass import _NovaTech
+
+
 class _Cooling(EnvExperiment):
     
     def build(self):
@@ -18,31 +23,33 @@ class _Cooling(EnvExperiment):
         ## TTLs      
         self.setattr_device("ttl5") # for turning on and off modulation channel
         self.setattr_device("ttl6") # for switching to single freq channel
-        self.setattr_device("ttl0") # probe beam 
-        self.setattr_device("ttl1") # 3D MOT beam
         self.setattr_device("ttl3") # MOT coil direction
+        self.setattr_device("ttl0") # Zeeman and 2D MOT
         
         ## AOMS
         
+        self.nova = _NovaTech(self)
+        
         # RF synth sources
         self.setattr_device('urukul1_cpld')
-        self.setattr_device('urukul2_cpld')
+        
+        self.nova = _NovaTech(self)
+        self.setattr_device("ttl0")
         
         # names for all our AOMs
-        self.AOMs = ['Zeeman', '2D', "3D", "Probe", "3P0_repump", "3P2_repump", '688_shelf']
-       
+        self.AOMs = ["3D", "3P0_repump", "3P2_repump", '813']
+        # self.AOMs = ['Zeeman', '2D', "3D", "Probe", "3P0_repump", "3P2_repump", '688_shelf']
+        self.nova_AOMs = ['Zeeman', '2D']
+        
         # default values for all params for all AOMs
-        self.scales = [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]     
-        self.attens = [14.5, 4.0, 6.0, 6.0, 9.0, 9.0, 6.0, 4.0, 9.0, 9.0, 6.0]      
-        self.freqs = [210.0, 195.0, 90.0, 121.0, 100.0, 100.0, 200.0, 80.0, 80.0, 80.0, 200.0]
+        self.scales = [0.8, 0.8, 0.8, 0.8, 500, 500]     
+        self.attens = [6.0, 6.0, 9.0, 6.0] # last two are for nova tech and are scaled between 0 and 1024  
+        self.freqs = [90.0, 100.0, 100.0, 100.0, 195.0, 210.0 ] 
    
-        self.urukul_channels = [self.get_device("urukul1_ch2"),
-                                self.get_device("urukul1_ch0"),
+        self.urukul_channels = [self.get_device("urukul1_ch0"),
                                 self.get_device("urukul1_ch1"),
-                                self.get_device("urukul1_ch3"),
-                                self.get_device("urukul2_ch0"),
-                                self.get_device("urukul2_ch1"),
-                                self.get_device("urukul2_ch2")]
+                                self.get_device("urukul1_ch2"),
+                                self.get_device("urukul1_ch3")]
         
         # setting attributes to controll all AOMs       
         for i in range(len(self.AOMs)):
@@ -51,7 +58,14 @@ class _Cooling(EnvExperiment):
             self.setattr_argument(f"atten_{AOM}", NumberValue(self.attens[i], min=1.0, max=30), f"{AOM}_AOMs")
             self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50*1e6, max=350*1e6, scale=1e6, unit='MHz'),  f"{AOM}_AOMs")
         
+        for j in range(len(self.nova_AOMs)):
+            i = j + len(self.AOMs)
+            AOM = self.nova_AOMs[j]
+            self.setattr_argument(f"scale_{AOM}", NumberValue(self.scales[i], min=0.0, max=1024.0), f"{AOM}_AOMs")
+            self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50*1e6, max=350*1e6, scale=1e6, unit='MHz'),  f"{AOM}_AOMs")
         
+        
+        self.atom_source = False # flag to keep track of whether or not 2D and zeeman are on
         
         
         ## MOT Coils
@@ -106,22 +120,26 @@ class _Cooling(EnvExperiment):
     #<><><><><><><>
        
     def prepare_aoms(self):
-        self.scales = [self.scale_Zeeman, self.scale_Zeeman, self.scale_Zeeman, 
-                       self.scale_Probe, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_688_shelf]
+        self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_813]
         
-        self.attens = [self.atten_Zeeman, self.atten_2D, self.atten_3D, 
-                       self.atten_Probe, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_688_shelf]
+        self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_813]
                        
-                       
+        self.freqs = [self.freq_3D, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_813]
         
-        self.freqs = [self.freq_Zeeman, self.freq_2D, self.freq_3D, 
-                       self.freq_Probe, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_688_shelf]
+        
+        self.nova.table_init()
+        ind = 0
+        for _ in range(5):
+            self.nova.table_write(ind, 0, 0, 0, 0)
+            self.nova.table_write(ind+1, self.freq_Zeeman/2, self.scale_Zeeman/2, self.freq_2D, self.scale_2D)
+            ind += 2
+        self.nova.table_start()
+        
     @kernel
     def init_aoms(self, on=False):
    
         delay(10*ms)
         self.urukul1_cpld.init()
-        self.urukul2_cpld.init()
 
         for i in range(len(self.AOMs)):
             delay(10*ms)
@@ -138,13 +156,16 @@ class _Cooling(EnvExperiment):
             else:                
                 ch.sw.off()
         delay(10*ms)
+        
+        
+        # add in initializing novatech here
             
     @kernel
     def init_ttls(self):
         delay(100*ms)
-        self.ttl0.output()
-        self.ttl1.output()
         self.ttl3.output()
+        self.ttl0.output()
+        self.ttl0.on()
         
         
     # basic AOM methods
@@ -192,6 +213,25 @@ class _Cooling(EnvExperiment):
                 set_asf = ch.amplitude_to_asf(self.scales[ind])
                 ch.set_mu(set_freq, asf=set_asf)
 
+    @kernel 
+    def atom_source_on(self):
+        if not self.atom_source:
+            delay(-80*us)
+            self.ttl0.off()
+            delay(5*us)
+            self.ttl0.on()
+            self.atom_source = True
+            delay(75*us)
+    @kernel 
+    def atom_source_off(self):
+        if self.atom_source:
+            delay(-80*us)
+            self.ttl0.off()
+            delay(5*us)
+            self.ttl0.on()
+            self.atom_source = False
+            delay(75*us)
+        
     
     #<><><><><><><><>
     # Coil Functions
@@ -251,13 +291,7 @@ class _Cooling(EnvExperiment):
     @kernel 
     def hold(self, time):
         delay(time)
-        
-    #<><><><><><><><><>
-    # MOGLabs Functions
-    #<><><><><><><><><>
-    
-    ## TODO
-    
+
     
     #<><><><><><><><><><><>
     # General MOT Functions
@@ -265,15 +299,18 @@ class _Cooling(EnvExperiment):
     
     @kernel
     def bMOT_pulse(self):
-        self.AOMs_on(['Zeeman', '2D', "3D", "3P0_repump", "3P2_repump"])
+        self.atom_source_on()        
+        self.AOMs_on(["3D", "3P0_repump", "3P2_repump"])
         self.Blackman_ramp_up()
         self.hold(self.bmot_load_duration)
         self.Blackman_ramp_down()
-        self.AOMs_off(self.AOMs)
+        self.AOMs_off(["3D", "3P0_repump", "3P2_repump"])
+        self.atom_source_off()
     
     @kernel
-    def bMOT_load(self):        
-        self.AOMs_on(['Zeeman', '2D', "3D", "3P0_repump", "3P2_repump"])
+    def bMOT_load(self):
+        self.atom_source_on()        
+        self.AOMs_on(["3D", "3P0_repump", "3P2_repump"])
         self.Blackman_ramp_up()
         self.hold(self.bmot_load_duration)
 
@@ -284,15 +321,15 @@ class _Cooling(EnvExperiment):
     def rMOT_pulse(self):
         self.core.break_realtime()
         self.ttl5.on()  # make sure moglabs ch1 off
-        self.ttl1.on()
-        self.AOMs_on( ['Zeeman', '2D', "3D", "3P0_repump", "3P2_repump"])
+        self.atom_source_on()        
+        self.AOMs_on(["3D", "3P0_repump", "3P2_repump"])
         self.Blackman_ramp_up()
         self.hold(self.bmot_load_duration)
         
         
         with parallel:
-            self.ttl1.off() # turn off 3D mot shutter
-            self.AOMs_off(['Zeeman', '2D', '3D'])
+            self.atom_source_off()        
+            self.AOMs_off(['3D'])
             self.set_current(self.rmot_bb_current)
             self.ttl5.off()  # switch on  broadband mode (ch1)
             
@@ -327,7 +364,8 @@ class _Cooling(EnvExperiment):
         
     @kernel
     def take_MOT_image(self, cam):
-        self.AOMs_off(['3P0_repump', '3P2_repump', '2D', '3D', 'Zeeman'])
+        self.atom_source_off()
+        self.AOMs_off(['3P0_repump', '3P2_repump', '3D'])
         self.set_AOM_freqs([('3D', self.f_MOT3D_detect)])
         self.set_AOM_attens([('3D', 6.0)])
         with parallel:
@@ -340,37 +378,23 @@ class _Cooling(EnvExperiment):
         self.set_AOM_freqs([('3D', self.freq_3D)])
         self.set_AOM_attens([('3D', self.atten_3D)])
 
-        
-    @kernel
-    def shutters_on(self, shutters):
-        for shutter in shutters:
-            if shutter == '3D':
-                self.ttl1.on()
-            elif shutter == 'Probe':
-                self.ttl0.on()
-                
-    @kernel
-    def shutters_off(self, shutters):
-        for shutter in shutters:
-            if shutter == '3D':
-                self.ttl1.off()
-            elif shutter == 'Probe':
-                self.ttl0.off()
 
-    @kernel
-    def shelf(self):
-        self.AOMs_on(['688_shelf'])
-        delay(0.1*ms)
-        self.AOMs_off(['688_shelf'])
+
+        
+    # @kernel
+    # def shelf(self):
+    #     self.AOMs_on(['688_shelf'])
+    #     delay(0.1*ms)
+    #     self.AOMs_off(['688_shelf'])
         
         
         
-    @kernel
-    def push(self):
-        self.AOMs_on(['Probe'])
-        delay(self.Push_pulse_time)
-        self.AOMs_off(['Probe'])
-        self.AOMs_on(['3P0_repump', '3P2_repump'])
-        delay(self.Delay_duration)
+    # @kernel
+    # def push(self):
+    #     self.AOMs_on(['Probe'])
+    #     delay(self.Push_pulse_time)
+    #     self.AOMs_off(['Probe'])
+    #     self.AOMs_on(['3P0_repump', '3P2_repump'])
+    #     delay(self.Delay_duration)
         
         

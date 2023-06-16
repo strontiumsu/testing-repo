@@ -35,7 +35,7 @@ class _Bragg(EnvExperiment):
     
     def build(self):
         self.setattr_device("core")        
-        self.setattr_device("urukul0_cpld")
+        self.setattr_device("urukul2_cpld")
         
         
         # names for all our AOMs
@@ -52,8 +52,8 @@ class _Bragg(EnvExperiment):
         self.freqs = [110.0, 
                       110.0]  
         
-        self.urukul_channels = [self.get_device("urukul0_ch0"),
-                                self.get_device("urukul0_ch1")]
+        self.urukul_channels = [self.get_device("urukul2_ch0"),
+                                self.get_device("urukul2_ch1")]
 
         # setting attributes to controll all AOMs       
         for i in range(len(self.AOMs)):
@@ -73,7 +73,7 @@ class _Bragg(EnvExperiment):
     def init_aoms(self, on=True):
    
         delay(10*ms)
-        self.urukul0_cpld.init()
+        self.urukul2_cpld.init()
 
         for i in range(len(self.AOMs)):
             delay(10*ms)
@@ -147,75 +147,9 @@ class _Bragg(EnvExperiment):
         self.hold(time)
         self.AOMs_off(self.AOMs)
         
-    # @kernel    
-    # def init_aoms_phase(self,t):
-        
-    #     delay(1*ms)
-    #     self.urukul0_cpld.init()
-
-    #     self.urukul_hmc_ref_switch1_689_3nu.init()
-    #     self.urukul_hmc_ref_switch1_689_3nu.set_mu(0x40000000, asf=self.urukul_hmc_ref_switch1_689_3nu.amplitude_to_asf(self.switch1_689_3nu_dds_scale))
-    #     self.urukul_hmc_ref_switch1_689_3nu.set_att(self.switch1_689_3nu_iatten)
-    #     self.urukul_hmc_ref_switch1_689_3nu.set(self.switch1_689_3nu_frequency,phase=0.0, ref_time_mu=t)
-            
-    #     self.urukul_hmc_ref_switch2_689_3nu.init()
-    #     self.urukul_hmc_ref_switch2_689_3nu.set_mu(0x40000000, asf=self.urukul_hmc_ref_switch2_689_3nu.amplitude_to_asf(self.switch2_689_3nu_dds_scale))
-    #     self.urukul_hmc_ref_switch2_689_3nu.set_att(self.switch2_689_3nu_iatten)
-    #     self.urukul_hmc_ref_switch2_689_3nu.set(self.switch2_689_3nu_frequency,phase=0.0, ref_time_mu=t)
-            
-    #     self.urukul_hmc_ref_switch3_689_3nu.init()
-    #     self.urukul_hmc_ref_switch3_689_3nu.set_mu(0x40000000, asf=self.urukul_hmc_ref_switch3_689_3nu.amplitude_to_asf(self.switch3_689_3nu_dds_scale))
-    #     self.urukul_hmc_ref_switch3_689_3nu.set_att(self.switch3_689_3nu_iatten)
-    #     self.urukul_hmc_ref_switch3_689_3nu.set(self.switch3_689_3nu_frequency,phase=0.0, ref_time_mu=t)
-    #     #self.urukul_hmc_ref_switch3_689_3nu.sw.on()
-        
-    # @kernel    
-    # def set_switch1_phase_freq_profile(self,freq,ph,t,prof=0):
-    #     self.urukul_meas[0].set(freq,phase=ph,phase_mode = PHASE_MODE_TRACKING, ref_time_mu=t, profile = prof)
-    # @kernel    
-    # def set_switch2_phase_freq_profile(self,freq,ph,t,prof=0):
-    #     self.urukul_meas[1].set(freq,phase=ph,phase_mode = PHASE_MODE_TRACKING, ref_time_mu=t, profile = prof)
-    # @kernel    
-    # def set_switch3_phase_freq_profile(self,freq,ph,t,prof=0):
-    #     self.urukul_meas[2].set(freq,phase=ph,phase_mode = PHASE_MODE_TRACKING, ref_time_mu=t, profile = prof)
-          
-    # @kernel 
-    # def set_switch1_689_3nu_frequency(self): 
-        
-    #     fswitch1 = self.switch1_689_3nu_frequency
-    #     urukul_ch =self.urukul_meas[0]
-    #     dds_ftw_switch1_689_3nu=self.urukul_meas[0].frequency_to_ftw(fswitch1)
-    #     urukul_ch.set_mu(dds_ftw_switch1_689_3nu, asf=urukul_ch.amplitude_to_asf(self.switch1_689_3nu_DDS_amplitude_scale))   
-        
-    # @kernel 
-    # def set_switch1_689_3nu_freq(self,f): 
-        
-    #     fswitch1 = f
-    #     urukul_ch =self.urukul_meas[0]
-    #     dds_ftw_switch1_689_3nu=self.urukul_meas[0].frequency_to_ftw(fswitch1)
-    #     urukul_ch.set_mu(dds_ftw_switch1_689_3nu, asf=urukul_ch.amplitude_to_asf(self.switch1_689_3nu_DDS_amplitude_scale))        
-    
-    # @kernel 
-    # def set_switch1_phase(self,ph,t):
-    #     self.urukul_meas[0].set(self.switch1_689_3nu_frequency,phase=ph, ref_time_mu=t)
-        
-    # @kernel 
-    # def set_switch1_phase_freq(self,freq,ph,t):
-    #     self.urukul_meas[0].set(freq,phase=ph, ref_time_mu=t)
-        
-    # @kernel 
-    # def set_switch1_phase_freq_mu(self,freq,ph,t):
-    #     dds_ftw_switch1_689_3nu=self.urukul_meas[0].frequency_to_ftw(freq)
-    #     phpow = self.urukul_meas[0].turns_to_pow(ph)
-    #     self.urukul_meas[0].set_mu(dds_ftw_switch1_689_3nu, pow_ = phpow, 
-    #                                asf=self.urukul_meas[0].amplitude_to_asf(self.switch1_689_3nu_DDS_amplitude_scale),
-    #                                ref_time_mu = t) 
-    
     
     def index_artiq(self, aom) -> TInt32:
-        if aom == 'Bragg1':
-            return  0
-        elif aom == 'Bragg2':
-            return  1
-        else:
-            raise Exception("No AOM with that name")
+        for i in range(len(self.AOMs)):
+            if self.AOMs[i] == aom:
+                return i
+        raise Exception("No AOM with that name")

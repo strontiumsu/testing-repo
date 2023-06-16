@@ -41,6 +41,18 @@ class _NovaTech(EnvExperiment):
     def set_phase(self, channel, phase):
         self.nova.set_phase(channel, phase)
         
+    def table_write(self, i, freq0, amp0, freq1, amp1):
+        self.nova.table_write(i, freq0, amp0, freq1, amp1)
+        
+    def table_init(self):
+        self.nova.table_init()
+        
+    def table_start(self):
+        self.nova.table_start()
+        
+    def table_next(self):
+        self.nova.table_next()
+        
    
         
    

@@ -1,17 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sat Jul  9 12:04:05 2022
+Created on Thu Jun 15 13:50:24 2023
 
 @author: sr
 """
-
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Feb 15 21:19:34 2022
-
-@author: sr
-"""
-
 
 import sys
 sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
@@ -20,19 +12,19 @@ sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
 from artiq.experiment import *
 import numpy as np
 
-from ThreePhotonClass import _ThreePhoton
+from BraggClass import _Bragg
 
-class Three_photon_689_set(EnvExperiment):
+class Bragg_set(EnvExperiment):
 
 
     def build(self):
         self.setattr_device("core")
-        self.th_ph=_ThreePhoton(self)
+        self.bragg=_Bragg(self)
 
     def prepare(self):
-        self.th_ph.prepare_aoms()
+        self.bragg.prepare_aoms()
 
     @kernel
     def run(self):
         self.core.reset()
-        self.th_ph.init_aoms(on=True)
+        self.bragg.init_aoms(on=True)

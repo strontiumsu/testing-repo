@@ -2,7 +2,7 @@
 """
 Created on Tue Mar 14 17:49:55 2023
 
-@author: sr
+@author: E. Porter
 """
 
 from artiq.experiment import *
