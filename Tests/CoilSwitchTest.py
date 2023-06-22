@@ -36,16 +36,12 @@ class CoilSwitchTest_exp(EnvExperiment):
         
         
         self.MOTs.init_ttls()
-        # self.MOTs.init_coils()
+        self.MOTs.init_coils()
         delay(1000*ms)
         self.MOTs.set_current_dir(0)
         
         for i in range(5):
-            delay(2000*ms)
-            # self.MOTs.set_current_dir(0)
-            # delay(2000*ms)
-            # self.MOTs.set_current_dir(+1)
-            
+            delay(100*ms)
             
             self.MOTs.Blackman_ramp_up()
             self.MOTs.hold(self.MOTs.bmot_load_duration)
@@ -58,8 +54,7 @@ class CoilSwitchTest_exp(EnvExperiment):
             self.MOTs.hold(self.MOTs.bmot_load_duration)
             self.MOTs.set_current(0.0)
             delay(100*ms)
-            self.MOTs.set_current_dir(1)
+            self.MOTs.set_current_dir(0)
             delay(100*ms)
-        
 
             

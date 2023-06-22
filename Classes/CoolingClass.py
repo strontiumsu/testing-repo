@@ -34,7 +34,6 @@ class _Cooling(EnvExperiment):
         self.setattr_device('urukul1_cpld')
         
         self.nova = _NovaTech(self)
-        self.setattr_device("ttl0")
         
         # names for all our AOMs
         self.AOMs = ["3D", "3P0_repump", "3P2_repump", '813']
@@ -44,7 +43,7 @@ class _Cooling(EnvExperiment):
         # default values for all params for all AOMs
         self.scales = [0.8, 0.8, 0.8, 0.8, 500, 500]     
         self.attens = [6.0, 6.0, 9.0, 6.0] # last two are for nova tech and are scaled between 0 and 1024  
-        self.freqs = [90.0, 100.0, 100.0, 100.0, 195.0, 210.0 ] 
+        self.freqs = [90.0, 100.0, 100.0, 100.0, 210.0, 195.0] 
    
         self.urukul_channels = [self.get_device("urukul1_ch0"),
                                 self.get_device("urukul1_ch1"),
@@ -119,7 +118,7 @@ class _Cooling(EnvExperiment):
     # AOM Functions
     #<><><><><><><>
        
-    def prepare_aoms(self):
+    def prepare_aoms(self, N=4):
         self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_813]
         
         self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_813]
@@ -128,10 +127,12 @@ class _Cooling(EnvExperiment):
         
         
         self.nova.table_init()
+        
+        
         ind = 0
-        for _ in range(5):
+        for _ in range(N):
             self.nova.table_write(ind, 0, 0, 0, 0)
-            self.nova.table_write(ind+1, self.freq_Zeeman/2, self.scale_Zeeman/2, self.freq_2D, self.scale_2D)
+            self.nova.table_write(ind+1, self.freq_Zeeman/2/1e6, self.scale_Zeeman, self.freq_2D/2/1e6, self.scale_2D)
             ind += 2
         self.nova.table_start()
         
@@ -164,8 +165,11 @@ class _Cooling(EnvExperiment):
     def init_ttls(self):
         delay(100*ms)
         self.ttl3.output()
+        delay(5*ms)
         self.ttl0.output()
+        delay(5*ms)
         self.ttl0.on()
+        delay(5*ms)
         
         
     # basic AOM methods
@@ -261,7 +265,7 @@ class _Cooling(EnvExperiment):
     @kernel
     def set_current_dir(self, direc):
         assert direc in [0,+1]
-        if direc == 1:
+        if direc == 0:
             self.ttl3.off()
         else:
             self.ttl3.on()
@@ -311,6 +315,7 @@ class _Cooling(EnvExperiment):
     def bMOT_load(self):
         self.atom_source_on()        
         self.AOMs_on(["3D", "3P0_repump", "3P2_repump"])
+        self.set_current_dir(0)
         self.Blackman_ramp_up()
         self.hold(self.bmot_load_duration)
 
@@ -323,6 +328,7 @@ class _Cooling(EnvExperiment):
         self.ttl5.on()  # make sure moglabs ch1 off
         self.atom_source_on()        
         self.AOMs_on(["3D", "3P0_repump", "3P2_repump"])
+        self.set_current_dir(0)
         self.Blackman_ramp_up()
         self.hold(self.bmot_load_duration)
         

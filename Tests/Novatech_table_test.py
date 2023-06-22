@@ -21,27 +21,32 @@ class NovaTech_table_test_Exp(EnvExperiment):
 
     def prepare(self):
 
-        self.dev.set_gain(0, 0.2)
-        self.dev.set_freq(0, 10*1e6)
+        # self.nova.set_gain(0, 0.3)
+        # self.nova.set_freq(0, 0.5*1e6)
+        # self.nova.set_gain(1, 0.3)
+        # self.nova.set_freq(1, 0.5*1e6)
 
-        self.dev.table_init()
+        self.nova.table_init()
         ind = 0
-        for _ in range(2):
-            self.dev.table_write(ind, 50, 800, 50, 1023)
-            self.dev.table_write(ind+1, 0, 0, 50, 1023)
+        for _ in range(10):
+            
+            self.nova.table_write(ind, 1, 0, 1, 0)
+            self.nova.table_write(ind+1, 1, 200, 1, 1023)
             ind += 2
-        self.dev.table_start()
+        self.nova.table_start()
 
     @kernel
     def run(self):
         self.core.reset()
+        delay(100*ms)
         self.ttl0.output()
+        self.ttl0.on()
+        
+        for _ in range(10):
+            self.ttl0.off()
+            delay(10*us)
+            self.ttl0.on()
+            delay(1*ms)
 
-        for _ in range(20):
-            self.ttl0.pulse(1*ms)
-            delay(200*ms)
 
-
-
-        self.core.wait_until_mu(now_mu())
-        self.dev.close()
+        self.ttl0.off()

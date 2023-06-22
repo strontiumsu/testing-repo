@@ -37,16 +37,15 @@ class Blue_MOT_pulse_exp(EnvExperiment):
         
         # attributes for this experiment
         self.setattr_argument("pulses", NumberValue(5,min=0, max=100), "parameters")
-        self.setattr_argument("pulse_duration", NumberValue(200.0*1e-3,min=10.0*1e-3,max=9000.00*1e-3,scale=1e-3,
-                      unit="ms"),"parameters")  
         self.setattr_argument("wait_time", NumberValue(1000.0*1e-3,min=10.0*1e-3,max=9000.00*1e-3,scale=1e-3,
                       unit="ms"),"parameters")
         self.setattr_argument("image", BooleanValue(False),"parameters")
         
     def prepare(self):
         # initial datasets for the aoms and mot coils, does not run on core
-        self.MOTs.prepare_aoms()
+        self.MOTs.prepare_aoms(int(self.pulses*1.5))
         self.MOTs.prepare_coils()
+        
         if self.image: self.Camera.camera_init()
         
     @kernel
@@ -54,18 +53,16 @@ class Blue_MOT_pulse_exp(EnvExperiment):
         # initial devices
         self.core.reset()
         self.MOTs.init_coils()
+        self.MOTs.init_ttls()
         self.MOTs.init_aoms(on=False)
         delay(5*ms)
-        try:
-            if self.image: self.MOTs.take_background_image_exp(self.Camera)
-        except RTIOUnderflow:
-            raise ValueError('pp[s')
+        if self.image: self.MOTs.take_background_image_exp(self.Camera)
+        
+        
         
         # pulse using the given parameters
         for _ in range(int(self.pulses)):
-                       
-            
-        
+                         
             if self.image:self.Camera.arm()
         
             delay(200*ms)     
@@ -74,7 +71,8 @@ class Blue_MOT_pulse_exp(EnvExperiment):
             delay(10*ms)
 
             self.MOTs.Blackman_ramp_down()
-            self.MOTs.AOMs_off(self.MOTs.AOMs)
+            self.MOTs.atom_source_off()
+            self.MOTs.AOMs_off(["3D", "3P0_repump", "3P2_repump"])
             delay(50*ms)    
        
             if self.image: self.Camera.process_image(bg_sub=True)

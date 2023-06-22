@@ -43,7 +43,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
         self.setattr_argument("pulses", NumberValue(5,min=0, max=100), "parameters")
         self.setattr_argument("wait_time", NumberValue(1000.0*1e-3,min=10.0*1e-3,max=9000.00*1e-3,scale=1e-3,
                       unit="ms"),"parameters")
-        self.setattr_argument("push_beam",BooleanValue(False),"Loading")
+        self.setattr_argument("push_beam",BooleanValue(False),"parameters")
 
 
     def prepare(self):
@@ -60,9 +60,10 @@ class Red_MOT_pulse_exp(EnvExperiment):
     def run(self):
         # initial devices
         self.core.reset()
-        delay(500*ms)
         self.MOTs.init_coils()
+        self.MOTs.init_ttls()
         self.MOTs.init_aoms(on=False)
+        
         delay(50*ms)
         self.MOTs.take_background_image_exp(self.Camera)
         delay(500*ms)
@@ -72,20 +73,18 @@ class Red_MOT_pulse_exp(EnvExperiment):
             delay(200*ms)
 
             self.MOTs.rMOT_pulse()
-            if self.push_beam:
-                self.MOTs.push()
+            # if self.push_beam:
+            #     self.MOTs.push()
             self.MOTs.take_MOT_image(self.Camera)
-            delay(10*ms)
-
-
 
             delay(50*ms)
             self.Camera.process_image(bg_sub=True)
             delay(300*ms)
             self.core.wait_until_mu(now_mu())
             delay(200*ms)
-            self.MOTs.AOMs_off(self.MOTs.AOMs)
+            self.MOTs.AOMs_off(['3P0_repump', '3P2_repump', '3D'])
 
 
             delay(self.wait_time)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
+        self.MOTs.atom_source_on()
