@@ -177,6 +177,22 @@ class TemperatureModel(TimeModel):
             fit.fitresults['tempX'] = 67.8**2*fit.fitresults['A']*1e-12*M/Kb
         if self.Direction == 'Y':
             fit.fitresults['tempY'] = 67.8**2*fit.fitresults['A']*1e-12*M/Kb
+            
+class DipoleTemperatureModel(TimeModel):
+    
+    
+    namespace = 'TimeOfFlight'
+    x_label = 'drop time'
+    x_unit = 'ms'
+    
+    y_label = 'variance'
+    y_unit = 'pixel squared'
+    y_scale = 1e6
+    
+    plot_title = 'Cloud Size over time'
+    enable_histograms = False
+    fit_function = Power
+    hold = {'alpha':2}
 
 
 class RabiModel(TimeModel):

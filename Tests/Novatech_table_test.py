@@ -30,8 +30,8 @@ class NovaTech_table_test_Exp(EnvExperiment):
         ind = 0
         for _ in range(10):
             
-            self.nova.table_write(ind, 1, 0, 1, 0)
-            self.nova.table_write(ind+1, 1, 200, 1, 1023)
+            self.nova.table_write(ind, 100, 0, 1, 1023)
+            self.nova.table_write(ind+1, 100, 0, 1, 1023)
             ind += 2
         self.nova.table_start()
 
@@ -46,7 +46,7 @@ class NovaTech_table_test_Exp(EnvExperiment):
             self.ttl0.off()
             delay(10*us)
             self.ttl0.on()
-            delay(1*ms)
+            delay(1000*ms)
 
 
         self.ttl0.off()

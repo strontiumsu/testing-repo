@@ -36,8 +36,11 @@ class Blue_MOT_DC_exp(EnvExperiment):
         self.MOTs.init_ttls()
         self.MOTs.init_aoms(on=False)
         delay(100*ms)
-
+        
         self.MOTs.bMOT_load()
+        delay(5*ms)
+        self.MOTs.AOMs_on(['Probe'])
+
         
 
             

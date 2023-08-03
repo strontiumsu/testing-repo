@@ -161,17 +161,17 @@ class _ThreePhoton(EnvExperiment):
     @kernel 
     def threePhoton_pulse(self,t):
         if len(self.beams) == 3:
-            self.AOMs_on(['Beam1'])
-            delay(0.22*us)
-            self.AOMs_on(['Beam2'])
-            delay(0.05*us)
             self.AOMs_on(['Beam3'])
-            delay(t)
-            self.AOMs_off(['Beam1'])
+            delay(0.22*us)
+            self.AOMs_on(['Beam1'])
             delay(0.15*us)
-            self.AOMs_off(['Beam2'])
-            delay(0.07*us)
+            self.AOMs_on(['Beam2'])
+            delay(t)
             self.AOMs_off(['Beam3'])
+            delay(0.15*us)
+            self.AOMs_off(['Beam1'])
+            delay(0.07*us)
+            self.AOMs_off(['Beam2'])
             
         else:
             self.AOMs_on(self.beams)

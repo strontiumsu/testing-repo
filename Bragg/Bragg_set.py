@@ -20,6 +20,17 @@ class Bragg_set(EnvExperiment):
     def build(self):
         self.setattr_device("core")
         self.bragg=_Bragg(self)
+        
+        self.setattr_argument("Bragg1", BooleanValue(False))
+        self.setattr_argument("Bragg2", BooleanValue(False))
+        self.setattr_argument("Homodyne1", BooleanValue(False))
+        self.setattr_argument("Homodyne2", BooleanValue(False))
+        
+        self.aoms_on = []
+        if self.Bragg1:self.aoms_on.append('Bragg1')
+        if self.Bragg2:self.aoms_on.append('Bragg2')
+        if self.Homodyne1:self.aoms_on.append('Homodyne1')
+        if self.Homodyne2:self.aoms_on.append('Homodyne2')
 
     def prepare(self):
         self.bragg.prepare_aoms()
@@ -28,3 +39,4 @@ class Bragg_set(EnvExperiment):
     def run(self):
         self.core.reset()
         self.bragg.init_aoms(on=True)
+        # self.bragg.AOMs_on(self.aoms_on)

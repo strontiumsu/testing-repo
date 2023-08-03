@@ -35,7 +35,7 @@ class Temperature_scan_exp(Scan1D, TimeScan, EnvExperiment):
         
         # scan settings
         self.scan_arguments(times = {'start':0.1*1e-3,
-            'stop':5*1e-3,
+            'stop':50*1e-3,
             'npoints':20,
             'unit':"ms",
             'scale':ms,
@@ -84,9 +84,11 @@ class Temperature_scan_exp(Scan1D, TimeScan, EnvExperiment):
         delay(10*ms)
         
         self.MOTs.take_background_image_exp(self.Camera)
-        self.MOTs.AOMs_on(['3D', '2D', 'Zeeman', "3P0_repump", "3P2_repump"])
+        self.MOTs.atom_source_on()
+        self.MOTs.AOMs_on(['3D', "3P0_repump", "3P2_repump"])
         delay(5000*ms)
-        self.MOTs.AOMs_off(['3D', '2D', 'Zeeman', "3P0_repump", "3P2_repump"])
+        self.MOTs.AOMs_off(['3D', "3P0_repump", "3P2_repump"])
+        self.MOTs.atom_source_off()
                 
 
 
@@ -120,10 +122,10 @@ class Temperature_scan_exp(Scan1D, TimeScan, EnvExperiment):
         delay(50*ms)
         self.Camera.process_image(bg_sub=True)
         delay(400*ms)
-        if self.Direction == 'X':
-            return self.Camera.process_gaussian(3)
-        elif self.Direction == 'Y':
-            return self.Camera.process_gaussian(4)
+        # if self.Direction == 'X':
+        #     return self.Camera.process_gaussian(3)
+        # elif self.Direction == 'Y':
+        #     return self.Camera.process_gaussian(4)
         return 0
     
     

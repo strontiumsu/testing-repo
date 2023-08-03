@@ -36,19 +36,21 @@ class _Cooling(EnvExperiment):
         self.nova = _NovaTech(self)
         
         # names for all our AOMs
-        self.AOMs = ["3D", "3P0_repump", "3P2_repump", '813']
+        self.AOMs = ["3D", "3P0_repump", "3P2_repump", 'Probe']
         # self.AOMs = ['Zeeman', '2D', "3D", "Probe", "3P0_repump", "3P2_repump", '688_shelf']
         self.nova_AOMs = ['Zeeman', '2D']
         
         # default values for all params for all AOMs
-        self.scales = [0.8, 0.8, 0.8, 0.8, 500, 500]     
+        self.scales = [0.8, 0.8, 0.8, 0.8, 700, 800]     
         self.attens = [6.0, 6.0, 9.0, 6.0] # last two are for nova tech and are scaled between 0 and 1024  
-        self.freqs = [90.0, 100.0, 100.0, 100.0, 210.0, 195.0] 
+        self.freqs = [90.0, 100.0, 100.0, 210.0, 210.0, 195.0] 
    
         self.urukul_channels = [self.get_device("urukul1_ch0"),
                                 self.get_device("urukul1_ch1"),
                                 self.get_device("urukul1_ch2"),
                                 self.get_device("urukul1_ch3")]
+        
+        
         
         # setting attributes to controll all AOMs       
         for i in range(len(self.AOMs)):
@@ -70,6 +72,10 @@ class _Cooling(EnvExperiment):
         ## MOT Coils
         self.setattr_device("zotino0")
         self.dac_0=self.get_device("zotino0")
+        
+        self.setattr_argument("Bias_X_Voltage",NumberValue(0.0,min=-4.0,max=4.00),"Bias Coils")
+        self.setattr_argument("Bias_Y_Voltage",NumberValue(0.0,min=-4.0,max=4.00),"Bias Coils")
+        self.setattr_argument("Bias_Z_Voltage",NumberValue(0.0,min=-4.0,max=4.00),"Bias Coils")
         
         
         self.setattr_argument("bmot_ramp_duration",NumberValue(50.0*1e-3,min=1.0*1e-3,max=100.00*1e-3,scale=1e-3,
@@ -119,11 +125,11 @@ class _Cooling(EnvExperiment):
     #<><><><><><><>
        
     def prepare_aoms(self, N=4):
-        self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_813]
+        self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_Probe]
         
-        self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_813]
+        self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_Probe]
                        
-        self.freqs = [self.freq_3D, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_813]
+        self.freqs = [self.freq_3D, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_Probe]
         
         
         self.nova.table_init()
@@ -251,6 +257,12 @@ class _Cooling(EnvExperiment):
     def init_coils(self):
         self.dac_0.init()
         self.ttl3.off()
+        
+        # self.dac_0.write_dac(5, self.Bias_X_Voltage)
+        # self.dac_0.write_dac(6, self.Bias_Y_Voltage)
+        # self.dac_0.write_dac(7, self.Bias_Z_Voltage)
+        
+        self.dac_0.load()
        
     @kernel
     def coils_off(self):
@@ -266,7 +278,9 @@ class _Cooling(EnvExperiment):
     def set_current_dir(self, direc):
         assert direc in [0,+1]
         if direc == 0:
+            delay(5*ms)
             self.ttl3.off()
+            delay(5*ms)
         else:
             self.ttl3.on()
         
@@ -289,6 +303,7 @@ class _Cooling(EnvExperiment):
         dt = time/Npoints
         for step in range(1, int(Npoints)):            
             self.dac_0.write_dac(0, bottom + (top-bottom)/time*step*dt)
+            self.dac_0.write_dac(1,10-5/time*step*dt)
             self.dac_0.load()
             delay(dt)
             
@@ -354,6 +369,18 @@ class _Cooling(EnvExperiment):
         self.ttl6.off()
         self.set_current(0.0)
     
+    @kernel
+    def rMOT_beam_pulse(self, dur):
+        
+        with parallel:
+            self.ttl5.on()   # make sure moglabs ch1 off
+            self.ttl6.off() # switch RF switch to broadband mode
+
+        self.ttl6.on()
+        delay(dur)
+        self.ttl6.off()
+            
+    
     def index_artiq(self, aom) -> TInt32:
         for i in range(len(self.AOMs)):
             if self.AOMs[i] == aom:
@@ -387,20 +414,26 @@ class _Cooling(EnvExperiment):
 
 
         
-    # @kernel
-    # def shelf(self):
-    #     self.AOMs_on(['688_shelf'])
-    #     delay(0.1*ms)
-    #     self.AOMs_off(['688_shelf'])
+    @kernel
+    def shelf(self):
+        #self.AOMs_on(['688_shelf'])
+        delay(0.1*ms)
+        #self.AOMs_off(['688_shelf'])
         
         
         
-    # @kernel
-    # def push(self):
-    #     self.AOMs_on(['Probe'])
-    #     delay(self.Push_pulse_time)
-    #     self.AOMs_off(['Probe'])
-    #     self.AOMs_on(['3P0_repump', '3P2_repump'])
-    #     delay(self.Delay_duration)
+    @kernel
+    def push(self):
+        self.AOMs_on(['Probe'])
+        delay(self.Push_pulse_time)
+        self.AOMs_off(['Probe'])
+        self.AOMs_on(['3P0_repump', '3P2_repump'])
+        delay(self.Delay_duration)
+        
+        
+    @kernel 
+    def dipole_power(self, power):
+        self.dac_0.write_dac(3, power)
+        self.dac_0.load()
         
         

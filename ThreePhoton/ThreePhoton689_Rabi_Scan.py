@@ -69,7 +69,7 @@ class ThreePhoton689_Rabi_Scan(Scan1D, TimeFreqScan, EnvExperiment):
         
     def prepare(self):
         #prepare/initialize mot hardware and camera
-        self.MOTs.prepare_aoms()
+        self.MOTs.prepare_aoms(N=45)
         self.MOTs.prepare_coils()
         self.Camera.camera_init()
         self.ThPh.prepare_aoms()
@@ -77,7 +77,6 @@ class ThreePhoton689_Rabi_Scan(Scan1D, TimeFreqScan, EnvExperiment):
         self.enable_histograms = True
         self.model = RabiModel(self)
         self.register_model(self.model, measurement=True, fit=True)
-        
 
     @kernel
     def before_scan(self):
@@ -92,9 +91,12 @@ class ThreePhoton689_Rabi_Scan(Scan1D, TimeFreqScan, EnvExperiment):
         delay(10*ms)
         
         self.MOTs.take_background_image_exp(self.Camera)
-        self.MOTs.AOMs_on(['3D', '2D', 'Zeeman', "3P0_repump", "3P2_repump"])
-        delay(500*ms)
         
+        self.MOTs.atom_source_on()
+        self.MOTs.AOMs_on(['3D', "3P0_repump", "3P2_repump"])
+        delay(1000*ms)
+        self.MOTs.AOMs_off(['3D', "3P0_repump", "3P2_repump"])
+        self.MOTs.atom_source_off()     
         
         
 
@@ -120,16 +122,15 @@ class ThreePhoton689_Rabi_Scan(Scan1D, TimeFreqScan, EnvExperiment):
         self.ThPh.set_AOM_phase('Beam3', self.ThPh.freq_Beam3 , 0.0, self.t0, 0)
         if self.scan == 'frequency':            
             self.ThPh.set_AOM_phase('Beam' + self.ScanBeam, frequency, 0.0, self.t0, 0)
-         
-            
         # perform experiment
         self.MOTs.AOMs_off(self.MOTs.AOMs)
         delay(5*ms)
-        self.MOTs.rMOT_pulse()  # generates the red MOT        
+        self.MOTs.rMOT_pulse()  # generates the red MOT
+        delay(2*ms) # XXX let MOT field go to zero
         self.ThPh.set_field()        
         self.ThPh.threePhoton_pulse(pulse_time)
         
-    
+        
         # image
         if self.Shelf:
             self.MOTs.shelf()
@@ -137,12 +138,15 @@ class ThreePhoton689_Rabi_Scan(Scan1D, TimeFreqScan, EnvExperiment):
         self.MOTs.take_MOT_image(self.Camera)
         
         
-    
         #process and output
+        self.MOTs.atom_source_on() # just keeps AOMs warm
         self.MOTs.AOMs_on(self.MOTs.AOMs) # just keeps AOMs warm
+        self.MOTs.AOMs_on(['Probe']) # just keeps AOMs warm
         self.Camera.process_image(save=True, name='', bg_sub=True)
         self.ind += 1
-        delay(100*ms)        
+
+        delay(100*ms)
+        
         return self.Camera.get_push_stats()
 
     

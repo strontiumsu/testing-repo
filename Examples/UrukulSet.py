@@ -37,12 +37,12 @@ class UrukulSet(EnvExperiment):
         
         self.d0.set_att(5*dB)
         self.d1.set_att(10*dB)
-        self.d2.set_att(10*dB)
+        self.d2.set_att(5*dB)
         self.d3.set_att(15*dB)
 
         self.d0.set(90*MHz)
-        self.d1.set(102*MHz)
-        self.d2.set(100*MHz)
+        self.d1.set(100*MHz)
+        self.d2.set(210*MHz)
         self.d3.set(213*MHz)
 
         self.d0.sw.on()

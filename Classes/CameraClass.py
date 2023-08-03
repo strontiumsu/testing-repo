@@ -52,7 +52,8 @@ class _Camera(EnvExperiment):
         if self.get_is_armed(): self.disarm()
         self.cam.set_exposure(self.Exposure_Time)
         self.cam.set_gain(self.Hardware_Gain)
-        self.cam.set_roi(1150,1075,100,150)
+        #self.cam.set_roi(1150,1075,100,150) ###USED for 3-photon 689
+        self.cam.set_roi(1350,1450,400,400)
         self.cam_range = (50,-40, 30,-10)
 
         # for data analysis
@@ -65,9 +66,9 @@ class _Camera(EnvExperiment):
         # mot ranges
         self.y1 = 7
         self.y2 = 45
-        self.x1 = 40
-        self.x2 = 92
-        self.x3 = 144
+        self.x1 = 35
+        self.x2 = 87
+        self.x3 = 139
  
                   
     def arm(self):   
@@ -125,11 +126,11 @@ class _Camera(EnvExperiment):
         
         
         display_image = np.copy(self.current_image)
-        display_image[self.x1:self.x3+1,  self.y1] = 300
-        display_image[self.x1:self.x3+1,   self.y2] = 300
-        display_image[self.x1,   self.y1:self.y2+1] = 300
-        display_image[self.x2,   self.y1:self.y2+1] = 300
-        display_image[self.x3,   self.y1:self.y2+1] = 300
+        # display_image[self.x1:self.x3+1,  self.y1] = 300
+        # display_image[self.x1:self.x3+1,   self.y2] = 300
+        # display_image[self.x1,   self.y1:self.y2+1] = 300
+        # display_image[self.x2,   self.y1:self.y2+1] = 300
+        # display_image[self.x3,   self.y1:self.y2+1] = 300
         display_image = np.where(display_image > 0, display_image, 0)
         self.set_dataset("detection.images.current_image", display_image, broadcast=True)
         
@@ -165,8 +166,8 @@ class _Camera(EnvExperiment):
         img = np.array(self.get_dataset("detection.images.current_image"))
         center_x, center_y = np.unravel_index(img.argmax(), img.shape)
         val_max = self.current_image[center_x, center_y]
-        guess = [val_max, center_x, center_y, 5, 5, 0]
-        popt, pcov = curve_fit(_twoDGaussian, self.xdata, img.ravel(), p0=guess, maxfev=5000)
+        guess = [val_max, center_x, center_y, 30, 30, 0]
+        popt, pcov = curve_fit(_twoDGaussian, self.xdata, img.ravel(), p0=guess, maxfev=15000)
 
               
                                                     

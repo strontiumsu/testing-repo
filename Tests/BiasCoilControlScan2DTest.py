@@ -100,8 +100,21 @@ class BiasCoilControlScan2D(Scan2D, EnvExperiment): # note python works from lef
     def before_scan(self):
         self.core.reset()
         self.dac_0.init()
+        delay(10*ms)
+        
+        self.MOTs.init_coils()
+        self.MOTs.init_aoms(on=False)  # initializes whiling keeping them off
         
         delay(10*ms)
+        
+        self.MOTs.take_background_image_exp(self.Camera)
+        self.MOTs.atom_source_on()
+        self.MOTs.AOMs_on(['3D', "3P0_repump", "3P2_repump"])
+        delay(1000*ms)
+        self.MOTs.AOMs_off(['3D', "3P0_repump", "3P2_repump"])
+        self.MOTs.atom_source_off()
+        
+        
    
     @kernel
     def measure(self, point):
@@ -109,13 +122,30 @@ class BiasCoilControlScan2D(Scan2D, EnvExperiment): # note python works from lef
         self.core.wait_until_mu(now_mu())
         self.core.reset()
         delay(500*ms)
+        self.Camera.arm()
+        delay(200*ms)
         
         # Set DAC values
         self.dac_0.write_dac(5,self.V1_exp)
         self.dac_0.write_dac(6,self.V2_exp)
         self.dac_0.write_dac(7,self.V3)
-        
         self.dac_0.load()
+        
+        
+        
+        self.MOTs.AOMs_off(self.MOTs.AOMs)
+        delay(10*ms)
+        self.MOTs.rMOT_pulse()
+        
+        delay(self.delay_time)
+
+        self.MOTs.take_MOT_image(self.Camera)
+        delay(10*ms)
+        self.MOTs.AOMs_on(self.MOTs.AOMs)
+        
+        delay(50*ms)
+        self.Camera.process_image(bg_sub=True)
+        delay(400*ms)
         
         
         

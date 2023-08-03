@@ -48,7 +48,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
 
     def prepare(self):
         # initial datasets for the aoms and mot coils, does not run on core
-        self.MOTs.prepare_aoms()
+        self.MOTs.prepare_aoms(int(self.pulses*1.2))
         self.MOTs.prepare_coils()
 
         # Initialize camera
@@ -73,8 +73,10 @@ class Red_MOT_pulse_exp(EnvExperiment):
             delay(200*ms)
 
             self.MOTs.rMOT_pulse()
-            # if self.push_beam:
-            #     self.MOTs.push()
+            delay(self.wait_time)
+            if self.push_beam:
+                self.MOTs.push()
+            
             self.MOTs.take_MOT_image(self.Camera)
 
             delay(50*ms)
@@ -87,4 +89,5 @@ class Red_MOT_pulse_exp(EnvExperiment):
 
             delay(self.wait_time)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
+        self.MOTs.AOMs_on(['Probe'])
         self.MOTs.atom_source_on()

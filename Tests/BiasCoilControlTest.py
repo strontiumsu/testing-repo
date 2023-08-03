@@ -25,7 +25,16 @@ class BiasCoilControl(EnvExperiment):
         
       
    
-           
+    @kernel
+    def init_coils(self):
+        self.dac_0.init()
+        
+        self.dac_0.write(5, self.Bias_X_Voltage)
+        self.dac_0.write(6, self.Bias_Y_Voltage)
+        self.dac_0.write(7, self.Bias_Z_Voltage)
+        
+        self.dac_0.load()
+        
     @kernel
     def run(self):
         self.core.reset()
