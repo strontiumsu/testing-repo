@@ -48,8 +48,6 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         
         # attrs for this exp
         # self.setattr_argument('ScanType', EnumerationValue(['CoM', 'Tx', 'Tz']) )
-        self.setattr_argument("Detection_pulse_time",NumberValue(0.2*1e-3,min=0.0,max=10.00*1e-3,scale = 1e-3,
-                      unit="ms"),"Detection")
         
         self.setattr_argument("load_time", NumberValue(15*1e-3,min=1.0*1e-3,max=5000.00*1e-3,scale=1e-3,
                      unit="ms"),"parameters")

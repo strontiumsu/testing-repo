@@ -47,7 +47,7 @@ class _Bragg(EnvExperiment):
         
         self.attens = [18.0, 5.0, 20.0, 20.0]
         
-        self.freqs = [110.0, 110.0, 80.00000, 79.999999]  
+        self.freqs = [110.0, 110.0, 80.00000, 200.0]  
         
         self.urukul_channels = [self.get_device("urukul2_ch0"),
                                 self.get_device("urukul2_ch1"),
@@ -65,8 +65,8 @@ class _Bragg(EnvExperiment):
     def prepare_aoms(self):
         self.scales = [self.scale_Bragg1, self.scale_Bragg2, self.scale_Homodyne1, self.scale_Homodyne2]
         self.attens = [self.atten_Bragg1, self.atten_Bragg2, self.atten_Homodyne1, self.atten_Homodyne2]      
-        #self.freqs = [self.freq_Bragg1, self.freq_Bragg2, self.freq_Homodyne1, self.freq_Homodyne2]
-        self.freqs = [self.freq_Bragg1, self.freq_Bragg2, 80*1e6, 79.999999*1e6]
+        self.freqs = [self.freq_Bragg1, self.freq_Bragg2, self.freq_Homodyne1, self.freq_Homodyne2]
+        #self.freqs = [self.freq_Bragg1, self.freq_Bragg2, 80*1e6, 79.999999*1e6]
         
     @kernel
     def init_aoms(self, on=False): 

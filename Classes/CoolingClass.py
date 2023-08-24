@@ -24,6 +24,7 @@ class _Cooling(EnvExperiment):
         self.setattr_device("ttl5") # for turning on and off modulation channel
         self.setattr_device("ttl6") # for switching to single freq channel
         self.setattr_device("ttl3") # MOT coil direction
+        self.setattr_device("ttl1") # Push beam shutter
         self.setattr_device("ttl0") # Zeeman and 2D MOT
         
         ## AOMS
@@ -172,6 +173,8 @@ class _Cooling(EnvExperiment):
         delay(100*ms)
         self.ttl3.output()
         delay(5*ms)
+        self.ttl1.output()
+        delay(5*ms)
         self.ttl0.output()
         delay(5*ms)
         self.ttl0.on()
@@ -277,6 +280,9 @@ class _Cooling(EnvExperiment):
     @kernel
     def set_current_dir(self, direc):
         assert direc in [0,+1]
+        self.coils_off()
+        delay(10*ms)
+        
         if direc == 0:
             delay(5*ms)
             self.ttl3.off()
@@ -304,6 +310,15 @@ class _Cooling(EnvExperiment):
         for step in range(1, int(Npoints)):            
             self.dac_0.write_dac(0, bottom + (top-bottom)/time*step*dt)
             self.dac_0.write_dac(1,10-5/time*step*dt)
+            self.dac_0.load()
+            delay(dt)
+            
+    @kernel
+    def freq_ramp(self, bottom):
+        dt = 1*ms
+        tot = 50 # 50kHz full range
+        for step in range(1, tot, 2):            
+            self.dac_0.write_dac(2, -1 + 2*step/tot)
             self.dac_0.load()
             delay(dt)
             
@@ -363,9 +378,9 @@ class _Cooling(EnvExperiment):
         with parallel:
             self.ttl5.on()
             self.ttl6.on()
-            
+ 
         delay(self.rmot_sf_duration)
-        
+
         self.ttl6.off()
         self.set_current(0.0)
     
@@ -404,6 +419,8 @@ class _Cooling(EnvExperiment):
         with parallel:
             cam.trigger_camera()
             with sequential:
+                #self.AOMs_on(['3D'])
+                #self.AOMs_on(['3P0_repump','3D'])
                 self.AOMs_on(['3P0_repump', '3P2_repump', '3D'])
                 delay(self.Detection_pulse_time)
                 self.AOMs_off(['3D'])
@@ -424,16 +441,42 @@ class _Cooling(EnvExperiment):
         
     @kernel
     def push(self):
+        self.ttl1.on()
+        delay(17*ms)
         self.AOMs_on(['Probe'])
         delay(self.Push_pulse_time)
         self.AOMs_off(['Probe'])
-        self.AOMs_on(['3P0_repump', '3P2_repump'])
         delay(self.Delay_duration)
+        self.AOMs_on(['3P0_repump', '3P2_repump'])
+        
+        #self.ttl1.off()
+    @kernel
+    def blow_away(self, time):
+        self.atom_source_off()
+        self.AOMs_off(['3P0_repump', '3P2_repump', '3D'])
+        self.set_AOM_freqs([('3D', self.f_MOT3D_detect)])
+        self.set_AOM_attens([('3D', 6.0)])
+        self.AOMs_on(['3D'])
+        #self.AOMs_on(['3P0_repump','3D'])
+        #self.AOMs_on(['3P0_repump', '3P2_repump', '3D'])
+        delay(time)
+        self.AOMs_off(['3D'])
+        self.set_AOM_freqs([('3D', self.freq_3D)])
+        self.set_AOM_attens([('3D', self.atten_3D)])
         
         
     @kernel 
     def dipole_power(self, power):
         self.dac_0.write_dac(3, power)
         self.dac_0.load()
+        
+    @kernel 
+    def dipole_AM(self, low, high, time):
+        self.dac_0.write_dac(3, low)
+        self.dac_0.load()
+        delay(time)
+        self.dac_0.write_dac(3, high)
+        self.dac_0.load()
+        delay(time)
         
         

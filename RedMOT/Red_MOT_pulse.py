@@ -73,12 +73,14 @@ class Red_MOT_pulse_exp(EnvExperiment):
             delay(200*ms)
 
             self.MOTs.rMOT_pulse()
-            delay(self.wait_time)
+            delay(self.wait_time) ##load into dipole trap if desired
+            
             if self.push_beam:
                 self.MOTs.push()
             
             self.MOTs.take_MOT_image(self.Camera)
-
+            delay(15*ms)
+            self.MOTs.ttl1.off() # close push pulse shutter
             delay(50*ms)
             self.Camera.process_image(bg_sub=True)
             delay(300*ms)

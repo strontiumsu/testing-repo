@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Thu Aug  3 17:15:08 2023
+
+@author: sr
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Tue Aug  1 17:36:29 2023
 
 @author: E.Porter
@@ -17,7 +24,7 @@ from CoolingClass import _Cooling
 from CameraClass import _Camera
 from repository.models.scan_models import DipoleTemperatureModel
 
-class DipoleTrapFrequency_exp(Scan1D, TimeScan, EnvExperiment):
+class DipoleTrapFrequency_exp_AM(Scan1D, TimeScan, EnvExperiment):
     
     def build(self, **kwargs):
         # required initializations
@@ -49,12 +56,14 @@ class DipoleTrapFrequency_exp(Scan1D, TimeScan, EnvExperiment):
         # attrs for this exp
         # self.setattr_argument('ScanType', EnumerationValue(['CoM', 'Tx', 'Tz']) )
         
-        self.setattr_argument("load_time", NumberValue(15*1e-3,min=1.0*1e-3,max=5000.00*1e-3,scale=1e-3,
+        self.setattr_argument("load_time", NumberValue(5*1e-3,min=0.1*1e-3,max=50.00*1e-3,scale=1e-3,
                      unit="ms"),"parameters")
         self.setattr_argument("Dipole_Power_On",NumberValue(0.5,min=0.0,max=5.0,scale=1),"parameters")
         self.setattr_argument("Dipole_Power_Off",NumberValue(0.01,min=0.0,max=5.0,scale=1, ndecimals = 4),"parameters")
-        self.setattr_argument("off_time", NumberValue(2*1e-3,min=1.0*1e-3,max=10.00*1e-3,scale=1e-3,
+        self.setattr_argument("am_cycle_time", NumberValue(10.0*1e-3,min=1.0*1e-3,max=20.00*1e-3,scale=1e-3,
                              unit="ms"),"parameters")
+        
+        #self.num_cycles = int(self.am_cycle_time/self.am_period)
 
         
     def prepare(self):
@@ -108,10 +117,10 @@ class DipoleTrapFrequency_exp(Scan1D, TimeScan, EnvExperiment):
         self.MOTs.rMOT_pulse() # generate MOT
         
         delay(self.load_time) # load for fixed time
-        self.MOTs.dipole_power(self.Dipole_Power_Off) # turn off (low power) trap
-        delay(self.off_time)
-        self.MOTs.dipole_power(self.Dipole_Power_On)
-        delay(t_delay) # oscillate time
+        
+        for i in range(5):
+            self.MOTs.dipole_AM(self.Dipole_Power_On,self.Dipole_Power_Off,t_delay/2) # turn off (low power) trap
+
         self.MOTs.take_MOT_image(self.Camera) # image after variable drop time
         
         delay(10*ms)

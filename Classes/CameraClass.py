@@ -53,7 +53,7 @@ class _Camera(EnvExperiment):
         self.cam.set_exposure(self.Exposure_Time)
         self.cam.set_gain(self.Hardware_Gain)
         #self.cam.set_roi(1150,1075,100,150) ###USED for 3-photon 689
-        self.cam.set_roi(1350,1450,400,400)
+        self.cam.set_roi(1250,1425,400,300)
         self.cam_range = (50,-40, 30,-10)
 
         # for data analysis
@@ -63,12 +63,20 @@ class _Camera(EnvExperiment):
         
         self.ind = 0
         
-        # mot ranges
-        self.y1 = 7
-        self.y2 = 45
-        self.x1 = 35
-        self.x2 = 87
-        self.x3 = 139
+        # # mot ranges
+        # self.y1 = 5
+        # self.y2 = 65
+        
+        # self.x1 = 85
+        # self.x2 = 200
+        # self.x3 = 285
+        #mot ranges
+        self.y1 = 20
+        self.y2 = 50
+        
+        self.x1 = 85
+        self.x2 = 200
+        self.x3 = 230
  
                   
     def arm(self):   
@@ -120,7 +128,8 @@ class _Camera(EnvExperiment):
             self.set_dataset(f"detection.images.{name}{self.ind}", self.current_image, broadcast=False)
         
         pix_noise = np.average(self.current_image[120:143, 8:44])*(self.y2-self.y1)*(self.x2-self.x1)
-        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2])-pix_noise)/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])-pix_noise*2))), broadcast=False)   
+        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=False)
+        self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
         self.ind += 1
 
         
@@ -131,6 +140,10 @@ class _Camera(EnvExperiment):
         # display_image[self.x1,   self.y1:self.y2+1] = 300
         # display_image[self.x2,   self.y1:self.y2+1] = 300
         # display_image[self.x3,   self.y1:self.y2+1] = 300
+        display_image[self.x2:self.x3+1,  self.y1] = 300
+        display_image[self.x2:self.x3+1,   self.y2] = 300
+        display_image[self.x2,   self.y1:self.y2+1] = 300
+        display_image[self.x3,   self.y1:self.y2+1] = 300
         display_image = np.where(display_image > 0, display_image, 0)
         self.set_dataset("detection.images.current_image", display_image, broadcast=True)
         
@@ -175,6 +188,9 @@ class _Camera(EnvExperiment):
     
     def get_push_stats(self) -> TInt32:
         return self.get_dataset('detection.images.ratio')
+    
+    def get_count_stats(self) -> TInt32:
+        return self.get_dataset('detection.images.counts')
     
     def get_peak(self) -> TInt32:
         img = np.array(self.get_dataset("detection.images.current_image"))

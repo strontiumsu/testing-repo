@@ -28,14 +28,14 @@ class DipolePowerSetpoint_exp(EnvExperiment):
         self.dac_0.init()
         delay(500*ms)
         
-        for _ in range(10):
+        for _ in range(100):
             self.dac_0.write_dac(3,self.Dipole_Power_On)
             self.dac_0.load()
-            delay(50*ms)
+            delay(5*ms)
             
             self.dac_0.write_dac(3,self.Dipole_Power_Off)
             self.dac_0.load()
-            delay(50*ms)
+            delay(5*ms)
             
             
         self.dac_0.write_dac(3,self.Dipole_Power_On)

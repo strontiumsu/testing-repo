@@ -45,16 +45,39 @@ class CoilSwitchTest_exp(EnvExperiment):
             
             self.MOTs.Blackman_ramp_up()
             self.MOTs.hold(self.MOTs.bmot_load_duration)
-            self.MOTs.Blackman_ramp_down()
-            delay(100*ms)
-            self.MOTs.set_current_dir(0)
-            delay(100*ms)
             
-            self.MOTs.Blackman_ramp_up()
-            self.MOTs.hold(self.MOTs.bmot_load_duration)
+            self.MOTs.set_current(self.MOTs.rmot_bb_current)
+            delay(self.MOTs.rmot_bb_duration)
+            
+            self.MOTs.linear_ramp(self.MOTs.rmot_bb_current, self.MOTs.rmot_sf_current, self.MOTs.rmot_ramp_duration, self.MOTs.Npoints)
+            delay(self.MOTs.rmot_sf_duration)
+            
             self.MOTs.set_current(0.0)
-            delay(100*ms)
+            self.MOTs.set_current_dir(1)
+            
+            self.MOTs.set_current(0.25)
+            delay(50*ms)
+            self.MOTs.set_current(0.0)
+            delay(5*ms)
             self.MOTs.set_current_dir(0)
-            delay(100*ms)
+            
+            delay(50*ms)
+            
+            #####
+            
+            # self.MOTs.Blackman_ramp_up()
+            # self.MOTs.hold(self.MOTs.bmot_load_duration)
+            # self.MOTs.coils_off()
+            # delay(50*ms)
+            
+            # self.MOTs.set_current_dir(1)
+            # delay(50*ms) 
+            # self.MOTs.Blackman_ramp_up()
+            # self.MOTs.hold(self.MOTs.bmot_load_duration)
+            # self.MOTs.coils_off()
+            # delay(50*ms)
+            
+            # self.MOTs.set_current_dir(0)
+            # delay(50*ms)
 
             

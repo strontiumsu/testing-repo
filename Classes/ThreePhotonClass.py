@@ -183,7 +183,11 @@ class _ThreePhoton(EnvExperiment):
             delay(t)
             self.AOMs_off([beam])
 
-
+    @kernel 
+    def prep3P0_pulse(self, t):
+            self.AOMs_on(['688_shelf','Beam2'])
+            delay(t)
+            self.AOMs_off(['688_shelf','Beam2'])
     
     def index_artiq(self, aom) -> TInt32:
         for i in range(len(self.AOMs)):

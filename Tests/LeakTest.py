@@ -41,18 +41,21 @@ class Leak_Test_exp(EnvExperiment):
 
         self.core.reset()
         self.MOTs.init_aoms(on=False)
+        self.MOTs.init_ttls()
         if self.on:self.MOTs.AOMs_on(['3D'])
         else: self.MOTs.AOMs_off(['3D'])
             
         # delay(5*ms)
 
         
-        # for _ in range(int(self.pulses)):
-        #     self.MOTs.AOMs_on(['Probe'])
-        #     delay(self.wait_time)
-        #     self.MOTs.AOMs_off(['Probe'])
-        #     delay(self.wait_time)
-        #     delay(self.wait_time)
+        for _ in range(int(self.pulses)):
+            self.MOTs.push()
+            #self.MOTs.ttl1.on()
+            # self.MOTs.AOMs_on(['Probe'])
+            # delay(self.wait_time)
+            # self.MOTs.AOMs_off(['Probe'])
+            # delay(self.wait_time)
+            delay(self.wait_time)
 
             
 
