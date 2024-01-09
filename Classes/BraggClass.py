@@ -1,18 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb  6 10:54:54 2023
 
-@author: sr
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb 14 16:39:41 2022
-
-@author: sr
-"""
-
-# -*- coding: utf-8 -*-
 """
 Created on Mon Feb 14 15:48:49 2022
 
@@ -98,7 +84,7 @@ class _Bragg(EnvExperiment):
             print(self.index_artiq(aom))
             ch = self.urukul_channels[self.index_artiq(aom)]
             ch.sw.on()
-            delay(0.5*ms)
+            #delay(0.5*ms)
     @kernel
     def AOMs_off(self, AOMs):
         for aom in AOMs:
@@ -107,11 +93,11 @@ class _Bragg(EnvExperiment):
     @kernel        
     def set_AOM_freqs(self, freq_list): # takes in a list of tuples
         for aom, freq in freq_list:
-            self.index_artiq(aom)
-            self.freqs[self.index] = freq
-            ch = self.urukul_channels[self.index]
+            ind = self.index_artiq(aom)
+            self.freqs[ind] = freq
+            ch = self.urukul_channels[ind]
             set_freq = ch.frequency_to_ftw(freq)
-            set_asf = ch.amplitude_to_asf(self.scales[self.index])
+            set_asf = ch.amplitude_to_asf(self.scales[ind])
             ch.set_mu(set_freq, asf=set_asf)
 
     def get_AOM_freqs(self):
@@ -120,21 +106,21 @@ class _Bragg(EnvExperiment):
     @kernel        
     def set_AOM_attens(self, atten_list):
         for aom, atten in atten_list:
-            self.index_artiq(aom)
-            self.attens[self.index] = atten
-            self.urukul_channels[self.index].set.att(atten)
+            ind = self.index_artiq(aom)
+            self.attens[ind] = atten
+            self.urukul_channels[ind].set_att(atten)
 
     def get_AOM_attens(self):
         return self.attens
     
     @kernel        
     def set_AOM_scales(self, scale_list):
-        for aom, scale in scale_list.items():
-            self.index_artiq(aom)
-            self.scales[self.index] = scale
-            ch = self.urukul_channels[self.index]
-            set_freq = ch.frequency_to_ftw(self.freqs[self.index])
-            set_asf = ch.amplitude_to_asf(self.scales[self.index])
+        for aom, scale in scale_list:
+            ind = self.index_artiq(aom)
+            self.scales[ind] = scale
+            ch = self.urukul_channels[ind]
+            set_freq = ch.frequency_to_ftw(self.freqs[ind])
+            set_asf = ch.amplitude_to_asf(self.scales[ind])
             ch.set_mu(set_freq, asf=set_asf)
 
     def get_AOM_scales(self):

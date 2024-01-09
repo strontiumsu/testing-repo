@@ -70,13 +70,23 @@ class _Camera(EnvExperiment):
         # self.x1 = 85
         # self.x2 = 200
         # self.x3 = 285
-        #mot ranges
-        self.y1 = 20
-        self.y2 = 50
         
-        self.x1 = 85
-        self.x2 = 200
-        self.x3 = 230
+        #mot ranges
+        #self.y1 = 50
+        #self.y2 = 105
+
+        
+        #self.x1 = 130
+        #self.x2 = 195
+        #self.x3 = 235
+        
+        self.x1 = 195
+        self.x2 = 240
+        
+        self.y1 = 10
+        self.y2 = 58
+        self.y3 = 90
+        #self.y3 = 165
  
                   
     def arm(self):   
@@ -127,35 +137,58 @@ class _Camera(EnvExperiment):
         if save:
             self.set_dataset(f"detection.images.{name}{self.ind}", self.current_image, broadcast=False)
         
-        pix_noise = np.average(self.current_image[120:143, 8:44])*(self.y2-self.y1)*(self.x2-self.x1)
-        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=False)
-        self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
+        # old camera code
+        #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=False)
+        #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
+        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x2, self.y1:self.y3])))), broadcast=False)
+        self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))), broadcast=True)
+        
         self.ind += 1
+        
+        
+        # new camera code here:
+        # pix_noise = np.average(self.current_image[120:143, 8:44])
+        # red_counts = np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2])- pix_noise*(self.x3-self.x2)*(self.y2-self.y1)
+        # total_counts = np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])- pix_noise*(self.x3-self.x1)*(self.y2-self.y1)
+        # prob = red_counts/total_counts
+        
+        # self.set_dataset("detection.images.ratio", int(10**6*(prob)), broadcast=False)
+        # self.set_dataset("detection.images.counts", int(red_counts), broadcast=True)
+        # self.ind += 1
 
         
         
         display_image = np.copy(self.current_image)
-        # display_image[self.x1:self.x3+1,  self.y1] = 300
-        # display_image[self.x1:self.x3+1,   self.y2] = 300
-        # display_image[self.x1,   self.y1:self.y2+1] = 300
-        # display_image[self.x2,   self.y1:self.y2+1] = 300
-        # display_image[self.x3,   self.y1:self.y2+1] = 300
-        display_image[self.x2:self.x3+1,  self.y1] = 300
-        display_image[self.x2:self.x3+1,   self.y2] = 300
-        display_image[self.x2,   self.y1:self.y2+1] = 300
-        display_image[self.x3,   self.y1:self.y2+1] = 300
+        # display_image[self.x1:self.x3+1,  self.y1] = 200
+        # display_image[self.x1:self.x3+1,   self.y2] = 200
+        # display_image[self.x1,   self.y1:self.y2+1] = 200
+        # display_image[self.x2,   self.y1:self.y2+1] = 200
+        # display_image[self.x3,   self.y1:self.y2+1] = 200
+        # display_image[self.x2:self.x3+1,  self.y1] = 200
+        # display_image[self.x2:self.x3+1,   self.y2] = 200
+        # display_image[self.x2,   self.y1:self.y2+1] = 200
+        # display_image[self.x3,   self.y1:self.y2+1] = 200
+        display_image[self.x1:self.x2+1,  self.y1] = 200
+        display_image[self.x1:self.x2+1,   self.y2] = 200
+        display_image[self.x1:self.x2+1,   self.y3] = 200
+        display_image[self.x1,   self.y1:self.y3+1] = 200
+        display_image[self.x2,   self.y1:self.y3+1] = 200
+        
+        
+
         display_image = np.where(display_image > 0, display_image, 0)
         self.set_dataset("detection.images.current_image", display_image, broadcast=True)
         
-        self.set_dataset("detection.images.MOT_range", [self.x1, self.x2, self.x3, self.y1, self.y2], broadcast=False)
+        #self.set_dataset("detection.images.MOT_range", [self.x1, self.x2, self.x3, self.y1, self.y2], broadcast=False)
+        #self.set_dataset("detection.images.MOT_range", [self.x1, self.x2, self.x3, self.y1, self.y2], broadcast=False)
         
         self.disarm()
         
     def process_background(self):
         # processes the image from the background imaging
         self.acquire()
-        x1, x2, y1, y2 = self.cam_range
-        self.background_image = np.copy(self.cam.get_all_images()[0])[x1:x2,y1:y2]
+        x1, x3, y1, y2 = self.cam_range
+        self.background_image = np.copy(self.cam.get_all_images()[0])[x1:x3,y1:y2]
         self.set_dataset("detection.images.background_image", self.background_image, broadcast=False)
         self.set_dataset("detection.images.current_image", self.background_image, broadcast=True)
         self.disarm()
@@ -188,6 +221,8 @@ class _Camera(EnvExperiment):
     
     def get_push_stats(self) -> TInt32:
         return self.get_dataset('detection.images.ratio')
+    def get_push_stats_temp(self) -> TInt32:
+        return int(10**6*self.get_dataset('detection.images.counts'))
     
     def get_count_stats(self) -> TInt32:
         return self.get_dataset('detection.images.counts')

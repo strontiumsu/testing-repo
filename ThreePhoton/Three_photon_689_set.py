@@ -15,11 +15,7 @@ Created on Tue Feb 15 21:19:34 2022
 
 import sys
 sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
-
-
-from artiq.experiment import *
-import numpy as np
-
+from artiq.experiment import EnvExperiment, kernel
 from ThreePhotonClass import _ThreePhoton
 
 class Three_photon_689_set(EnvExperiment):
@@ -35,4 +31,5 @@ class Three_photon_689_set(EnvExperiment):
     @kernel
     def run(self):
         self.core.reset()
-        self.th_ph.init_aoms(on=True)
+        self.th_ph.init_aoms(on=False)
+        self.th_ph.AOMs_on(self.th_ph.AOMs)

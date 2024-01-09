@@ -18,6 +18,10 @@ class _ThreePhoton(EnvExperiment):
         
         ## TTLs      
         self.setattr_device("ttl7") # for turning on bias field pulse
+        self.setattr_device("ttl2") # Integrator hold
+        
+        
+        
         ## AOMS
         
         # RF synth sources
@@ -28,8 +32,8 @@ class _ThreePhoton(EnvExperiment):
        
         # default values for all params for all AOMs
         self.scales = [0.8, 0.8, 0.8, 0.8]     
-        self.attens = [7.0, 9.0, 9.0, 6.0]      
-        self.freqs = [84.0, 84.0, 84.0, 200.0]
+        self.attens = [5.0, 4.0, 7.0, 7.0]      
+        self.freqs = [84.0, 84.0, 84.0, 90.0]
    
         self.urukul_channels = [self.get_device("urukul0_ch0"),
                                 self.get_device("urukul0_ch1"),
@@ -41,7 +45,7 @@ class _ThreePhoton(EnvExperiment):
             AOM = self.AOMs[i]
             self.setattr_argument(f"scale_{AOM}", NumberValue(self.scales[i], min=0.0, max=0.9), "Three_photon")
             self.setattr_argument(f"atten_{AOM}", NumberValue(self.attens[i], min=1.0, max=30), "Three_photon")
-            self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50*1e6, max=350*1e6, scale=1e6, unit='MHz'), "Three_photon")
+            self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50*1e6, max=350*1e6, scale=1e6, unit='MHz',ndecimals = 5), "Three_photon")
     
         self.setattr_argument("Beam1_on",BooleanValue(False),"Three_photon")
         self.setattr_argument("Beam2_on",BooleanValue(False),"Three_photon")
@@ -64,6 +68,7 @@ class _ThreePhoton(EnvExperiment):
         if self.Beam1_on: self.beams.append('Beam1')
         if self.Beam2_on: self.beams.append('Beam2')
         if self.Beam3_on: self.beams.append('Beam3')
+
     @kernel
     def init_aoms(self, on=False):
    
@@ -83,18 +88,27 @@ class _ThreePhoton(EnvExperiment):
             else:                
                 ch.sw.off()
         delay(10*ms)
-        
+     
+    @kernel
+    def init_ttls(self):
+        delay(100*ms)
+        self.ttl2.output()
+        delay(5*ms)
+        self.ttl2.off()
+        delay(5*ms)
         
     # basic AOM methods
     @kernel
     def AOMs_on(self, AOMs):
         with parallel:
+            self.ttl2.off()
             for aom in AOMs:
                 self.urukul_channels[self.index_artiq(aom)].sw.on()
 
     @kernel
     def AOMs_off(self, AOMs):
         with parallel:
+            self.ttl2.on()
             for aom in AOMs:
                 self.urukul_channels[self.index_artiq(aom)].sw.off()
 
@@ -161,16 +175,38 @@ class _ThreePhoton(EnvExperiment):
     @kernel 
     def threePhoton_pulse(self,t):
         if len(self.beams) == 3:
-            self.AOMs_on(['Beam3'])
-            delay(0.22*us)
             self.AOMs_on(['Beam1'])
-            delay(0.15*us)
             self.AOMs_on(['Beam2'])
+            delay(0.03*ms)
+            self.AOMs_on(['Beam3'])
             delay(t)
             self.AOMs_off(['Beam3'])
-            delay(0.15*us)
+            delay(0.03*ms)
             self.AOMs_off(['Beam1'])
-            delay(0.07*us)
+            self.AOMs_off(['Beam2'])
+            
+        else:
+            self.AOMs_on(self.beams)
+            delay(t)
+            self.AOMs_off(self.beams)
+     
+     
+        
+    @kernel 
+    def threePhoton_Ramsey_pulse(self,tpi,t):
+        if len(self.beams) == 3:
+            self.AOMs_on(['Beam1'])
+            self.AOMs_on(['Beam2'])
+            delay(1*us)
+            self.AOMs_on(['Beam3'])
+            delay(tpi)
+            self.AOMs_off(['Beam3'])
+            delay(t)
+            self.AOMs_on(['Beam3'])
+            delay(tpi)
+            self.AOMs_off(['Beam3'])
+            delay(1*us)
+            self.AOMs_off(['Beam1'])
             self.AOMs_off(['Beam2'])
             
         else:

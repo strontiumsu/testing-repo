@@ -15,6 +15,7 @@ sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
 
 from CoolingClass import _Cooling
 from CameraClass import _Camera
+from BraggClass import _Bragg
 from repository.models.scan_models import DipoleTemperatureModel
 
 class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
@@ -31,6 +32,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         # import classes for experiment control
         self.MOTs = _Cooling(self)
         self.Camera = _Camera(self)
+        self.Bragg = _Bragg(self)
         
         # scan settings
         self.scan_arguments(times = {'start':0.1*1e-3,
@@ -51,8 +53,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         
         self.setattr_argument("load_time", NumberValue(15*1e-3,min=1.0*1e-3,max=5000.00*1e-3,scale=1e-3,
                      unit="ms"),"parameters")
-        self.setattr_argument("Dipole_Power_On",NumberValue(10.0,min=0.0,max=10.0,scale=1),"parameters")
-        self.setattr_argument("Dipole_Power_Off",NumberValue(2.0,min=0.0,max=10.0,scale=1, ndecimals = 4),"parameters")
+
 
 
         
@@ -61,6 +62,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         self.MOTs.prepare_aoms(30)
         self.MOTs.prepare_coils()
         self.Camera.camera_init()
+        self.Bragg.prepare_aoms()
         # register model with scan framework
         self.enable_histograms = True
         self.model = DipoleTemperatureModel(self)
@@ -79,6 +81,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         self.core.reset()
         self.MOTs.init_coils()
         self.MOTs.init_aoms(on=False)  # initializes whiling keeping them off
+        self.Bragg.init_aoms(on=True)
         
         delay(10*ms)
         
@@ -88,7 +91,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         delay(2000*ms)
         self.MOTs.AOMs_off(['3D', "3P0_repump", "3P2_repump"])
         self.MOTs.atom_source_off()
-        self.MOTs.dipole_power(self.Dipole_Power_On)
+  
                 
 
 
@@ -101,19 +104,25 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         self.Camera.arm()
         delay(200*ms)
         
-        self.MOTs.dipole_power(self.Dipole_Power_On) # make sure dipole power is on
+    
         self.MOTs.AOMs_off(self.MOTs.AOMs)
         delay(10*ms)
         self.MOTs.rMOT_pulse() # generate MOT
-        delay(self.load_time) # load for fixed time
-        self.MOTs.dipole_power(self.Dipole_Power_Off) # turn off (low power) trap
+        #delay(self.load_time) # load for fixed time
+        # self.MOTs.dipole_power(self.Dipole_Power_Off) # turn off (low power) trap
+        
+        self.Bragg.set_AOM_attens([("Bragg1",25.0 )])
+        self.Bragg.AOMs_off(["Homodyne2"])
         
         
         delay(t_delay)  # drop time
         self.MOTs.take_MOT_image(self.Camera) # image after variable drop time
+        self.Bragg.set_AOM_attens([("Bragg1",self.Bragg.atten_Bragg1)])
+        self.Bragg.AOMs_on(["Homodyne2"])
+        
         delay(10*ms)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
-        self.MOTs.dipole_power(self.Dipole_Power_On)
+        # self.MOTs.dipole_power(self.Dipole_Power_On)
         
         delay(50*ms)
         self.Camera.process_image(bg_sub=True)

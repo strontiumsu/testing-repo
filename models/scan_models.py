@@ -194,7 +194,24 @@ class DipoleTemperatureModel(TimeModel):
     fit_function = Power
     hold = {'alpha':2}
 
+class RabiFlopModel(TimeModel):
+    
+    # global parameters
+    namespace="RabiFlopExp"
+    y_label='Transition Prob.'
+    enable_histograms = False
+    x_label = 'Pulse Time'
+    x_units = 'ms'
 
+    plot_title = 'Rabi Flop'
+    fit_function = ExpSine
+    main_fit = 'f'
+    def before_validate(self, fit):
+        fit.fitresults['f'] = np.round(fit.fitresults['f']*1e-6, 3)
+    y_scale = 1e6
+    
+    
+    
 class RabiModel(TimeModel):
 
     # global parameters
@@ -212,7 +229,7 @@ class RabiModel(TimeModel):
         if self.type == 'time':
             return 'us'
         else:
-            return 'Hz'
+            return 'MHz'
     @property
     def plot_title(self):
         if self.type == 'time':
@@ -232,7 +249,8 @@ class RabiModel(TimeModel):
         if self.type == 'time':
             fit.fitresults['f'] = np.round(fit.fitresults['f']*1e-6, 3)
         else:
-            fit.fitresults['f'] = np.round(fit.fitresults['x0']*1e-6, 3)
+            fit.fitresults['FWHM'] = 2*np.round(fit.fitresults['Gamma']*1e-3, 3)
+
     y_scale = 1e6
 class RamseyModel(TimeModel):
 

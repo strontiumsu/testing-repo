@@ -105,6 +105,7 @@ class Temperature_scan_exp(Scan1D, TimeScan, EnvExperiment):
         self.MOTs.AOMs_off(self.MOTs.AOMs)
         delay(10*ms)
         self.MOTs.rMOT_pulse()
+        delay(50*ms)
         with parallel:
             if self.heat:
                 with sequential:

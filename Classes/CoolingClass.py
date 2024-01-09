@@ -42,9 +42,9 @@ class _Cooling(EnvExperiment):
         self.nova_AOMs = ['Zeeman', '2D']
         
         # default values for all params for all AOMs
-        self.scales = [0.8, 0.8, 0.8, 0.8, 700, 800]     
-        self.attens = [6.0, 6.0, 9.0, 6.0] # last two are for nova tech and are scaled between 0 and 1024  
-        self.freqs = [90.0, 100.0, 100.0, 210.0, 210.0, 195.0] 
+        self.scales = [0.8, 0.8, 0.8, 0.8, 850, 800]     
+        self.attens = [6.0, 6.0, 14.0, 6.0] # last two are for nova tech and are scaled between 0 and 1024  
+        self.freqs = [90.0, 100.0, 80.0, 210.0, 220.0, 195.0] 
    
         self.urukul_channels = [self.get_device("urukul1_ch0"),
                                 self.get_device("urukul1_ch1"),
@@ -73,12 +73,7 @@ class _Cooling(EnvExperiment):
         ## MOT Coils
         self.setattr_device("zotino0")
         self.dac_0=self.get_device("zotino0")
-        
-        self.setattr_argument("Bias_X_Voltage",NumberValue(0.0,min=-4.0,max=4.00),"Bias Coils")
-        self.setattr_argument("Bias_Y_Voltage",NumberValue(0.0,min=-4.0,max=4.00),"Bias Coils")
-        self.setattr_argument("Bias_Z_Voltage",NumberValue(0.0,min=-4.0,max=4.00),"Bias Coils")
-        
-        
+
         self.setattr_argument("bmot_ramp_duration",NumberValue(50.0*1e-3,min=1.0*1e-3,max=100.00*1e-3,scale=1e-3,
                       unit="ms"),"MOT coil driver") # ramp duration
         
@@ -88,7 +83,7 @@ class _Cooling(EnvExperiment):
         self.setattr_argument("bmot_load_duration", NumberValue(1000.0*1e-3,min=10.0*1e-3,max=9000.00*1e-3,scale=1e-3,
                       unit="ms"),"MOT coil driver") # how long to hold blue mot on to load atoms
         
-        self.setattr_argument("rmot_bb_current",NumberValue(0.15,min=0.0,max=5.00,
+        self.setattr_argument("rmot_bb_current",NumberValue(0.25,min=0.0,max=5.00,
                       unit="A"),"MOT coil driver")  # broadband mot current
         
         self.setattr_argument("rmot_bb_duration",NumberValue(10.0*1e-3,min=4.0*1e-3,max=100*1e-3,scale = 1e-3,
@@ -97,7 +92,7 @@ class _Cooling(EnvExperiment):
         self.setattr_argument("rmot_ramp_duration",NumberValue(100.0*1e-3,min=0.0,max=200*1e-3,scale = 1e-3,
                       unit="ms"),"MOT coil driver")  # how long to ramp between bb and sf
         
-        self.setattr_argument("rmot_sf_current",NumberValue(1.15,min=0.0,max=10.0,
+        self.setattr_argument("rmot_sf_current",NumberValue(1.25,min=0.0,max=10.0,
                       unit="A"),"MOT coil driver") # single frequency mot current
         
         self.setattr_argument("rmot_sf_duration",NumberValue(25.0*1e-3,min=0.0*1e-3,max=300.0*1e-3,scale = 1e-3,
@@ -112,7 +107,7 @@ class _Cooling(EnvExperiment):
         self.setattr_argument("Detection_pulse_time",NumberValue(0.2*1e-3,min=0.0,max=100.00*1e-3,scale = 1e-3,
                       unit="ms"),"Detection")
         self.setattr_argument("Delay_duration",
-            NumberValue(3*1e-3,min=0.0*1e-6,max=15000.00*1e-6,scale = 1e-6,
+            NumberValue(1*1e-3,min=0.0*1e-6,max=15000.00*1e-6,scale = 1e-6,
                       unit="us"),"Detection")
 
         # misc params loaded from datasets
@@ -259,13 +254,12 @@ class _Cooling(EnvExperiment):
     @kernel
     def init_coils(self):
         self.dac_0.init()
+        delay(5*ms)
         self.ttl3.off()
         
-        # self.dac_0.write_dac(5, self.Bias_X_Voltage)
-        # self.dac_0.write_dac(6, self.Bias_Y_Voltage)
-        # self.dac_0.write_dac(7, self.Bias_Z_Voltage)
+        #self.dac_0.set_dac([0.0,1.0,-1.0],[0,2,4])
+        #self.dac_0.load()
         
-        self.dac_0.load()
        
     @kernel
     def coils_off(self):
@@ -281,7 +275,7 @@ class _Cooling(EnvExperiment):
     def set_current_dir(self, direc):
         assert direc in [0,+1]
         self.coils_off()
-        delay(10*ms)
+        delay(6*ms)
         
         if direc == 0:
             delay(5*ms)
@@ -314,14 +308,47 @@ class _Cooling(EnvExperiment):
             delay(dt)
             
     @kernel
-    def freq_ramp(self, bottom):
-        dt = 1*ms
-        tot = 50 # 50kHz full range
-        for step in range(1, tot, 2):            
-            self.dac_0.write_dac(2, -1 + 2*step/tot)
+    def freq_ramp(self, amp, time, Npoints):
+        dt = time/Npoints
+        for step in range(1, int(Npoints)):            
+            self.dac_0.write_dac(2, amp - 2*amp/time*step*dt)
             self.dac_0.load()
             delay(dt)
-            
+        self.dac_0.write_dac(2, amp)
+        self.dac_0.load()
+        
+     
+    @kernel
+    def dac4_switch(self, time):
+        self.dac_0.write_dac(4, -1.0)
+        self.dac_0.load()
+        delay(time)
+        self.dac_0.write_dac(4, 0.5)
+        self.dac_0.load()
+        
+    @kernel
+    def dac4_switch_opp(self, time):
+        self.dac_0.write_dac(4, 0.5)
+        self.dac_0.load()
+        delay(time)
+        self.dac_0.write_dac(4, -1.0)
+        self.dac_0.load()
+        
+    @kernel
+    def dac4_low(self):
+        self.dac_0.write_dac(4, -1.0)
+        self.dac_0.load()
+        
+    @kernel
+    def dac2_set(self, val):
+        self.dac_0.write_dac(2, val)
+        self.dac_0.load()
+        
+    @kernel
+    def dac_set(self, ch, val):
+        self.dac_0.write_dac(ch, val)
+        self.dac_0.load()
+     
     @kernel 
     def hold(self, time):
         delay(time)
@@ -420,7 +447,7 @@ class _Cooling(EnvExperiment):
             cam.trigger_camera()
             with sequential:
                 #self.AOMs_on(['3D'])
-                #self.AOMs_on(['3P0_repump','3D'])
+                #self.AOMs_on(['3P2_repump','3D'])
                 self.AOMs_on(['3P0_repump', '3P2_repump', '3D'])
                 delay(self.Detection_pulse_time)
                 self.AOMs_off(['3D'])
@@ -441,13 +468,13 @@ class _Cooling(EnvExperiment):
         
     @kernel
     def push(self):
-        self.ttl1.on()
-        delay(17*ms)
+        #self.ttl1.on()
+        #delay(17*ms)
         self.AOMs_on(['Probe'])
         delay(self.Push_pulse_time)
         self.AOMs_off(['Probe'])
         delay(self.Delay_duration)
-        self.AOMs_on(['3P0_repump', '3P2_repump'])
+        #self.AOMs_on(['3P0_repump', '3P2_repump'])
         
         #self.ttl1.off()
     @kernel

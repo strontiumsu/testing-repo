@@ -9,7 +9,7 @@ Created on Thu Feb  2 11:17:41 2023
 import sys
 sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
 
-from artiq.experiment import EnvExperiment, kernel, ms,us, NumberValue, delay, parallel, now_mu,BooleanValue
+from artiq.experiment import EnvExperiment, kernel, ms,us, NumberValue, delay, parallel, sequential, now_mu,BooleanValue
 
 # imports
 import numpy as np
@@ -41,7 +41,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
 
         # attributes for this experiment
         self.setattr_argument("pulses", NumberValue(5,min=0, max=100), "parameters")
-        self.setattr_argument("wait_time", NumberValue(1000.0*1e-3,min=10.0*1e-3,max=9000.00*1e-3,scale=1e-3,
+        self.setattr_argument("wait_time", NumberValue(1000.0*1e-3,min=0.0*1e-3,max=9000.00*1e-3,scale=1e-3,
                       unit="ms"),"parameters")
         self.setattr_argument("push_beam",BooleanValue(False),"parameters")
 
@@ -71,7 +71,6 @@ class Red_MOT_pulse_exp(EnvExperiment):
         for _ in range(int(self.pulses)):
             self.Camera.arm()
             delay(200*ms)
-
             self.MOTs.rMOT_pulse()
             delay(self.wait_time) ##load into dipole trap if desired
             
@@ -88,7 +87,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
             delay(200*ms)
             self.MOTs.AOMs_off(['3P0_repump', '3P2_repump', '3D'])
 
-
+            self.Camera.get_count_stats()
             delay(self.wait_time)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
         self.MOTs.AOMs_on(['Probe'])
