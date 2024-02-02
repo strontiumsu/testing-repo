@@ -122,15 +122,11 @@ class _Cooling(EnvExperiment):
        
     def prepare_aoms(self, N=4):
         self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_Probe]
-        
-        self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_Probe]
-                       
+        self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_Probe]                     
         self.freqs = [self.freq_3D, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_Probe]
-        
-        
+                
         self.nova.table_init()
-        
-        
+               
         ind = 0
         for _ in range(N):
             self.nova.table_write(ind, 0, 0, 0, 0)
@@ -160,8 +156,6 @@ class _Cooling(EnvExperiment):
                 ch.sw.off()
         delay(10*ms)
         
-        
-        # add in initializing novatech here
             
     @kernel
     def init_ttls(self):
@@ -257,9 +251,6 @@ class _Cooling(EnvExperiment):
         delay(5*ms)
         self.ttl3.off()
         
-        #self.dac_0.set_dac([0.0,1.0,-1.0],[0,2,4])
-        #self.dac_0.load()
-        
        
     @kernel
     def coils_off(self):
@@ -273,6 +264,8 @@ class _Cooling(EnvExperiment):
 
     @kernel
     def set_current_dir(self, direc):
+        
+        #is this right?
         assert direc in [0,+1]
         self.coils_off()
         delay(6*ms)
@@ -317,7 +310,9 @@ class _Cooling(EnvExperiment):
         self.dac_0.write_dac(2, amp)
         self.dac_0.load()
         
-     
+    
+        
+    # this is kinda clunky, fix at some point
     @kernel
     def dac4_switch(self, time):
         self.dac_0.write_dac(4, -1.0)

@@ -161,7 +161,7 @@ class ThreePhoton698_Ramsey_Scan_v3(Scan1D, TimeFreqScan, EnvExperiment):
         delay(10*ms)
         
         if self.FS:
-           self.Bragg.set_AOM_attens([("Bragg1",20.0 ), ("Homodyne2",30.0)])
+           self.Bragg.set_AOM_attens([("Dipole",20.0 ), ("Homodyne",30.0)])
            
         #self.ThPh.threePhoton_pulse(self.Rabi_t_pi) #drive 3P0
         #delay(pulse_time)
@@ -193,7 +193,7 @@ class ThreePhoton698_Ramsey_Scan_v3(Scan1D, TimeFreqScan, EnvExperiment):
         
         
         if self.FS:
-            self.Bragg.set_AOM_attens([("Bragg1",4.0 ), ("Homodyne2",3.0)])
+            self.Bragg.set_AOM_attens([("Dipole",4.0 ), ("Homodyne",3.0)])
             
         #if alignment or self.FS:           # aligning with 689
         if alignment:

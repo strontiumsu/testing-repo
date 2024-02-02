@@ -90,5 +90,4 @@ class Red_MOT_pulse_exp(EnvExperiment):
             self.Camera.get_count_stats()
             delay(self.wait_time)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
-        self.MOTs.AOMs_on(['Probe'])
         self.MOTs.atom_source_on()

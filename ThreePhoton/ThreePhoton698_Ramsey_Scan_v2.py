@@ -159,7 +159,7 @@ class ThreePhoton698_Ramsey_Scan_v2(Scan1D, EnvExperiment):
         # Turn off dipole trap
         #XXX
         if self.FS:
-           self.Bragg.set_AOM_attens([("Bragg1",20.0 ), ("Homodyne2",30.0)]) 
+           self.Bragg.set_AOM_attens([("Dipole",20.0 ), ("Homodyne",30.0)]) 
         
         # Turn on 689 beams first
         self.ThPh.AOMs_on(['Beam1','Beam2'])
@@ -183,7 +183,7 @@ class ThreePhoton698_Ramsey_Scan_v2(Scan1D, EnvExperiment):
         self.ThPh.AOMs_off(['Beam1','Beam2'])
         
         if self.FS:
-            self.Bragg.set_AOM_attens([("Bragg1",4.0 ), ("Homodyne2",3.0)]) 
+            self.Bragg.set_AOM_attens([("Dipole",4.0 ), ("Homodyne",3.0)]) 
         
         # self.ThPh.threePhoton_pulse(self.Rabi_t_pi)
         # self.ThPh.switch_profile(1)

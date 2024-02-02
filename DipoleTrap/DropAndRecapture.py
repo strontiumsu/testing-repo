@@ -74,14 +74,14 @@ class DropAndRecapture(EnvExperiment):
             delay(self.load_time) ##load into dipole trap if desired
             
             
-            self.Bragg.set_AOM_attens([("Bragg1",self.off_atten ), ("Bragg2",self.off_atten)])
-            self.Bragg.set_AOM_scales([("Bragg1",self.off_scale ), ("Bragg2",self.off_scale)])
+            self.Bragg.set_AOM_attens([("Dipole",self.off_atten ), ("Homodyne",self.off_atten)])
+            self.Bragg.set_AOM_scales([("Dipole",self.off_scale ), ("Homodyne",self.off_scale)])
             
             for _ in range(t):
                 delay(self.off_time)
             
-            self.Bragg.set_AOM_attens([("Bragg1",4.0 ), ("Bragg2",3.0)])  
-            self.Bragg.set_AOM_scales([("Bragg1",0.8 ), ("Bragg2",0.8)]) 
+            self.Bragg.set_AOM_attens([("Dipole",4.0 ), ("Homodyne",3.0)])  
+            self.Bragg.set_AOM_scales([("Dipole",0.8 ), ("Homodyne",0.8)]) 
             
             delay(self.image_wait_time)
             

@@ -63,30 +63,24 @@ class _Camera(EnvExperiment):
         
         self.ind = 0
         
-        # # mot ranges
-        # self.y1 = 5
-        # self.y2 = 65
-        
-        # self.x1 = 85
-        # self.x2 = 200
-        # self.x3 = 285
-        
-        #mot ranges
-        #self.y1 = 50
-        #self.y2 = 105
 
         
-        #self.x1 = 130
-        #self.x2 = 195
-        #self.x3 = 235
+        #mot ranges horizontal push
+        # self.y1 = 22
+        # self.y2 = 57
+
         
-        self.x1 = 195
-        self.x2 = 240
+        # self.x1 = 130
+        # self.x2 = 167
+        # self.x3 = 200
         
-        self.y1 = 10
-        self.y2 = 58
-        self.y3 = 90
-        #self.y3 = 165
+        # mot ranges vertical push
+        self.y1 = 22
+        self.y2 = 60
+        self.y3 = 160
+
+        self.x1 = 160
+        self.x2 = 205
  
                   
     def arm(self):   
@@ -137,9 +131,11 @@ class _Camera(EnvExperiment):
         if save:
             self.set_dataset(f"detection.images.{name}{self.ind}", self.current_image, broadcast=False)
         
-        # old camera code
+        # Ranges for horizontal push
         #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=False)
         #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
+        
+        #Ranges for vertical push
         self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x2, self.y1:self.y3])))), broadcast=False)
         self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))), broadcast=True)
         
@@ -159,7 +155,13 @@ class _Camera(EnvExperiment):
         
         
         display_image = np.copy(self.current_image)
-        # display_image[self.x1:self.x3+1,  self.y1] = 200
+        
+        #display for Bragg
+        # display_image[  80:85, 140:145] = 50
+        # display_image[  80:85, 165:170] = 50
+        # display_image[  80:85, 190:195 ] = 50
+        
+        # Display for horizontal push
         # display_image[self.x1:self.x3+1,   self.y2] = 200
         # display_image[self.x1,   self.y1:self.y2+1] = 200
         # display_image[self.x2,   self.y1:self.y2+1] = 200
@@ -168,11 +170,13 @@ class _Camera(EnvExperiment):
         # display_image[self.x2:self.x3+1,   self.y2] = 200
         # display_image[self.x2,   self.y1:self.y2+1] = 200
         # display_image[self.x3,   self.y1:self.y2+1] = 200
-        display_image[self.x1:self.x2+1,  self.y1] = 200
-        display_image[self.x1:self.x2+1,   self.y2] = 200
-        display_image[self.x1:self.x2+1,   self.y3] = 200
-        display_image[self.x1,   self.y1:self.y3+1] = 200
-        display_image[self.x2,   self.y1:self.y3+1] = 200
+        
+        #Display for veritcal push
+        # display_image[self.x1:self.x2+1,  self.y1] = 200
+        # display_image[self.x1:self.x2+1,   self.y2] = 200
+        # display_image[self.x1:self.x2+1,   self.y3] = 200
+        # display_image[self.x1,   self.y1:self.y3+1] = 200
+        # display_image[self.x2,   self.y1:self.y3+1] = 200
         
         
 

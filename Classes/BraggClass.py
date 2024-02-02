@@ -25,15 +25,18 @@ class _Bragg(EnvExperiment):
         
         
         # names for all our AOMs
-        self.AOMs = ['Bragg1', 'Bragg2', "Homodyne1", 'Homodyne2']
+        self.AOMs = ["Dipole", 'Bragg1', 'Bragg2', "Homodyne"]
+        # self.AOMs = ['Bragg1', 'Bragg2', "Homodyne1", 'Homodyne2']
 
         
         # default values for all params for all AOMs
         self.scales = [0.8, 0.8, 0.8, 0.8]
         
-        self.attens = [18.0, 5.0, 20.0, 20.0]
+        self.attens = [4.0, 18.0, 5.0, 3.0]
+        # self.attens = [18.0, 5.0, 20.0, 20.0]
         
-        self.freqs = [110.0, 110.0, 80.00000, 200.0]  
+        self.freqs = [80.0, 110.0, 110.00000, 80.0]  
+        # self.freqs = [110.0, 110.0, 80.00000, 200.0]  
         
         self.urukul_channels = [self.get_device("urukul2_ch0"),
                                 self.get_device("urukul2_ch1"),
@@ -49,10 +52,9 @@ class _Bragg(EnvExperiment):
         
         
     def prepare_aoms(self):
-        self.scales = [self.scale_Bragg1, self.scale_Bragg2, self.scale_Homodyne1, self.scale_Homodyne2]
-        self.attens = [self.atten_Bragg1, self.atten_Bragg2, self.atten_Homodyne1, self.atten_Homodyne2]      
-        self.freqs = [self.freq_Bragg1, self.freq_Bragg2, self.freq_Homodyne1, self.freq_Homodyne2]
-        #self.freqs = [self.freq_Bragg1, self.freq_Bragg2, 80*1e6, 79.999999*1e6]
+        self.scales = [self.scale_Dipole, self.scale_Bragg1, self.scale_Bragg2, self.scale_Homodyne]
+        self.attens = [self.atten_Dipole, self.atten_Bragg1, self.atten_Bragg2, self.atten_Homodyne]      
+        self.freqs = [self.freq_Dipole, self.freq_Bragg1, self.freq_Bragg2, self.freq_Homodyne]
         
     @kernel
     def init_aoms(self, on=False): 
@@ -80,58 +82,53 @@ class _Bragg(EnvExperiment):
     # basic AOM methods
     @kernel
     def AOMs_on(self, AOMs):
-        for aom in AOMs:
-            print(self.index_artiq(aom))
-            ch = self.urukul_channels[self.index_artiq(aom)]
-            ch.sw.on()
-            #delay(0.5*ms)
+        with parallel:
+            for aom in AOMs:
+                self.urukul_channels[self.index_artiq(aom)].sw.on()
+
     @kernel
     def AOMs_off(self, AOMs):
-        for aom in AOMs:
-            self.urukul_channels[self.index_artiq(aom)].sw.off()
-            # delay(2*ms)
+        with parallel:
+            for aom in AOMs:
+                self.urukul_channels[self.index_artiq(aom)].sw.off()
+
     @kernel        
     def set_AOM_freqs(self, freq_list): # takes in a list of tuples
-        for aom, freq in freq_list:
-            ind = self.index_artiq(aom)
-            self.freqs[ind] = freq
-            ch = self.urukul_channels[ind]
-            set_freq = ch.frequency_to_ftw(freq)
-            set_asf = ch.amplitude_to_asf(self.scales[ind])
-            ch.set_mu(set_freq, asf=set_asf)
+        with parallel:
+            for aom, freq in freq_list:
+                ind = self.index_artiq(aom)
+                self.freqs[ind] = freq
+                ch = self.urukul_channels[ind]
+                set_freq = ch.frequency_to_ftw(freq)
+                set_asf = ch.amplitude_to_asf(self.scales[ind])
+                ch.set_mu(set_freq, asf=set_asf)
 
-    def get_AOM_freqs(self):
-        return self.freqs
-    
+ 
     @kernel        
     def set_AOM_attens(self, atten_list):
-        for aom, atten in atten_list:
-            ind = self.index_artiq(aom)
-            self.attens[ind] = atten
-            self.urukul_channels[ind].set_att(atten)
+        with parallel:
+            for aom, atten in atten_list:
+                ind = self.index_artiq(aom)
+                self.attens[ind] = atten
+                self.urukul_channels[ind].set_att(atten)
 
-    def get_AOM_attens(self):
-        return self.attens
     
     @kernel        
     def set_AOM_scales(self, scale_list):
-        for aom, scale in scale_list:
-            ind = self.index_artiq(aom)
-            self.scales[ind] = scale
-            ch = self.urukul_channels[ind]
-            set_freq = ch.frequency_to_ftw(self.freqs[ind])
-            set_asf = ch.amplitude_to_asf(self.scales[ind])
-            ch.set_mu(set_freq, asf=set_asf)
-
-    def get_AOM_scales(self):
-        return self.scales
-    
-    
+        with parallel:
+            for aom, scale in scale_list:
+                ind = self.index_artiq(aom)
+                self.scales[ind] = scale
+                ch = self.urukul_channels[ind]
+                set_freq = ch.frequency_to_ftw(self.freqs[ind])
+                set_asf = ch.amplitude_to_asf(self.scales[ind])
+                ch.set_mu(set_freq, asf=set_asf)
+ 
     @kernel
     def bragg_pulse(self,time):
-        self.AOMs_on(self.AOMs)
-        self.hold(time)
-        self.AOMs_off(self.AOMs)
+        self.AOMs_on(["Bragg1", "Bragg2"])
+        delay(time)
+        self.AOMs_off(["Bragg1", "Bragg2"])
         
     
     def index_artiq(self, aom) -> TInt32:

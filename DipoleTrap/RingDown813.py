@@ -32,8 +32,8 @@ class RingDown_exp(EnvExperiment):
         self.bragg.init_aoms(on=False)
         delay(1000*ms)
         
-        self.bragg.AOMs_on(["Bragg1"])
+        self.bragg.AOMs_on(["Dipole"])
         delay(40000*ms)
-        self.bragg.AOMs_off(["Bragg1"])
+        self.bragg.AOMs_off(["Dipole"])
         
         

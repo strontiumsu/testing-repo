@@ -88,7 +88,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         self.MOTs.take_background_image_exp(self.Camera)
         self.MOTs.atom_source_on()
         self.MOTs.AOMs_on(['3D', "3P0_repump", "3P2_repump"])
-        delay(2000*ms)
+        delay(5000*ms)
         self.MOTs.AOMs_off(['3D', "3P0_repump", "3P2_repump"])
         self.MOTs.atom_source_off()
   
@@ -108,17 +108,17 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         self.MOTs.AOMs_off(self.MOTs.AOMs)
         delay(10*ms)
         self.MOTs.rMOT_pulse() # generate MOT
-        #delay(self.load_time) # load for fixed time
+        delay(self.load_time) # load for fixed time
         # self.MOTs.dipole_power(self.Dipole_Power_Off) # turn off (low power) trap
         
-        self.Bragg.set_AOM_attens([("Bragg1",25.0 )])
-        self.Bragg.AOMs_off(["Homodyne2"])
+        self.Bragg.set_AOM_attens([("Dipole",30.0 )])
+        self.Bragg.AOMs_off(["Homodyne"])
         
         
         delay(t_delay)  # drop time
         self.MOTs.take_MOT_image(self.Camera) # image after variable drop time
-        self.Bragg.set_AOM_attens([("Bragg1",self.Bragg.atten_Bragg1)])
-        self.Bragg.AOMs_on(["Homodyne2"])
+        self.Bragg.set_AOM_attens([("Dipole",self.Bragg.atten_Dipole)])
+        self.Bragg.AOMs_on(["Homodyne"])
         
         delay(10*ms)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
