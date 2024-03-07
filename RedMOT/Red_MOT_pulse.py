@@ -63,6 +63,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
         self.MOTs.init_coils()
         self.MOTs.init_ttls()
         self.MOTs.init_aoms(on=False)
+        self.MOTs.molasses_power(0.0)
         
         delay(50*ms)
         self.MOTs.take_background_image_exp(self.Camera)
@@ -91,3 +92,4 @@ class Red_MOT_pulse_exp(EnvExperiment):
             delay(self.wait_time)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
         self.MOTs.atom_source_on()
+        self.MOTs.molasses_power(0.0)

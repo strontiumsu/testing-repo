@@ -256,7 +256,10 @@ class _Cooling(EnvExperiment):
     def coils_off(self):
         self.dac_0.write_dac(0,0.0)
         self.dac_0.load()
-    
+    @kernel
+    def molasses_power(self, volt):
+        self.dac_0.write_dac(2,volt)
+        self.dac_0.load()
     @kernel    
     def set_current(self, cur):
         self.dac_0.write_dac(0,cur)
@@ -402,7 +405,6 @@ class _Cooling(EnvExperiment):
             self.ttl6.on()
  
         delay(self.rmot_sf_duration)
-
         self.ttl6.off()
         self.set_current(0.0)
     

@@ -123,6 +123,23 @@ class _Bragg(EnvExperiment):
                 set_freq = ch.frequency_to_ftw(self.freqs[ind])
                 set_asf = ch.amplitude_to_asf(self.scales[ind])
                 ch.set_mu(set_freq, asf=set_asf)
+                
+    @kernel
+    def set_AOM_phase(self, aom_name, freq, ph, t, prof=0):
+        ind = self.index_artiq(aom_name)
+        self.freqs[ind] = freq
+        ch = self.urukul_channels[ind]
+        ch.set(freq, phase=ph, phase_mode=PHASE_MODE_TRACKING, ref_time_mu=t, profile=prof)
+        
+    @kernel
+    def set_phase_mode(self, mode):
+        self.urukul_channels[0].set_phase_mode(mode)
+        self.urukul_channels[1].set_phase_mode(mode)
+        self.urukul_channels[2].set_phase_mode(mode)
+        self.urukul_channels[3].set_phase_mode(mode)
+    @kernel
+    def switch_profile(self, prof=0):
+        self.urukul_channels[0].cpld.set_profile(prof)
  
     @kernel
     def bragg_pulse(self,time):

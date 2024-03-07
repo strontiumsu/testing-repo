@@ -66,21 +66,21 @@ class _Camera(EnvExperiment):
 
         
         #mot ranges horizontal push
-        # self.y1 = 22
+        # self.y1 = 15
         # self.y2 = 57
 
         
-        # self.x1 = 130
-        # self.x2 = 167
+        # self.x1 = 110
+        # self.x2 = 172
         # self.x3 = 200
         
         # mot ranges vertical push
-        self.y1 = 22
+        self.y1 = 17
         self.y2 = 60
-        self.y3 = 160
+        self.y3 = 145
 
-        self.x1 = 160
-        self.x2 = 205
+        self.x1 = 165
+        self.x2 = 195
  
                   
     def arm(self):   
@@ -171,7 +171,7 @@ class _Camera(EnvExperiment):
         # display_image[self.x2,   self.y1:self.y2+1] = 200
         # display_image[self.x3,   self.y1:self.y2+1] = 200
         
-        #Display for veritcal push
+        # #Display for veritcal push
         # display_image[self.x1:self.x2+1,  self.y1] = 200
         # display_image[self.x1:self.x2+1,   self.y2] = 200
         # display_image[self.x1:self.x2+1,   self.y3] = 200

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Jan 24 16:33:03 2024
+Created on Tue Feb 20 16:41:22 2024
 
 @author: E. Porter
 """
@@ -8,7 +8,7 @@ from scan_framework import Scan1D, TimeFreqScan
 import sys
 sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
 
-from artiq.experiment import EnvExperiment, BooleanValue, kernel, now_mu, ms, us, MHz,kHz,  NumberValue, delay, parallel, sequential
+from artiq.experiment import EnvExperiment, BooleanValue, Scannable, RangeScan, kernel, now_mu, ms, us, MHz,kHz,  NumberValue, delay, parallel, sequential
 
 # imports
 import numpy as np
@@ -17,7 +17,7 @@ from CameraClass import _Camera
 from BraggClass import _Bragg
 from repository.models.scan_models import RabiModel
 
-class Bragg_scanning_exp(Scan1D, TimeFreqScan, EnvExperiment):
+class Bragg_MZI_exp(Scan1D, EnvExperiment):
     
     def build(self, **kwargs):
     # required initializations
@@ -35,39 +35,36 @@ class Bragg_scanning_exp(Scan1D, TimeFreqScan, EnvExperiment):
         self.enable_auto_tracking=False
         self.enable_profiling = False # enable to print runtime statistics to find bottlenecks
     
-        self.scan_arguments(times = {'start':0*us,
-            'stop':20*us,
-            'npoints':20,
-            'unit':"us",
-            'scale':us,
-            'global_step':0.1*us,
-            'ndecimals':2},
-             frequencies={
-            'start':-1000*kHz,
-            'stop':1000*kHz,
-            'npoints':50,
-            'unit':"kHz",
-            'scale':kHz,
-            'global_step':0.1*kHz,
-            'ndecimals':3},
-            frequency_center={'default':1*kHz},
-            pulse_time= {'default':0*us},
-            nbins = {'default':1000},
-            nrepeats = {'default':1},
-            npasses = {'default':1},
-            fit_options = {'default': "No Fits"}
+        self.t0 = np.int64(0)
+        self.ind = 1
         
-            )
+        self.setattr_argument('pulse_phase', 
+            Scannable(default=RangeScan(
+            start=0.0,
+            stop=2.0,
+            npoints=20),
+            scale=1,
+            ndecimals=2,
+            unit="Turns"), 'Ramsey')
+        
+        self.scan_arguments(nbins={'default':1000},
+                    nrepeats={'default':1},
+                    npasses={'default':1},
+                    fit_options={'default':"No Fits"})
     
         self.setattr_argument("dipole_load_time", NumberValue(25.0*1e-3,min=0.0*1e-3,max=1000.00*1e-3,scale=1e-3,
                       unit="ms"),"parameters")
         self.setattr_argument("drift_time", NumberValue(15.0*1e-3,min=0.0*1e-3,max=100.00*1e-3,scale=1e-3,
                unit="ms"),"parameters")
+        self.setattr_argument("interaction_time", NumberValue(15.0*1e-6,min=0.0*1e-6,max=10000.00*1e-6,scale=1e-6,
+               unit="us"),"parameters")
         self.setattr_argument("field_strength", NumberValue(0.3,min=0.0,max=5.0,scale=1),"parameters")
-        
+    def get_scan_points(self):
+        return self.pulse_phase  
+    
     def prepare(self):
     #prepare/initialize mot hardware and camera
-        self.MOTs.prepare_aoms(N=int(2.1*max([len(self.times), len(self.frequencies)])))
+        self.MOTs.prepare_aoms(N=50)
         self.MOTs.prepare_coils()
         self.Bragg.prepare_aoms()
         self.Camera.camera_init()
@@ -100,18 +97,36 @@ class Bragg_scanning_exp(Scan1D, TimeFreqScan, EnvExperiment):
         self.MOTs.atom_source_off()
         
     @kernel
-    def measure(self, time, frequency):
-        pulse_time = time
-        freq = frequency
+    def measure(self, point):
+        phase = point
         
         self.core.wait_until_mu(now_mu())
         self.core.reset()
         delay(100*ms)
         self.Camera.arm()
         delay(200*ms)
+        self.t0 = now_mu()
+        
+        self.Bragg.set_AOM_phase('Bragg1', 110*MHz, 0.0, self.t0, 0)
+        self.Bragg.set_AOM_phase('Bragg1', 110*MHz, 0.0, self.t0, 1)
+        # self.Bragg.set_AOM_phase('Bragg1', 110*MHz, 0.0, self.t0, 2)
+        # 
+        self.Bragg.set_AOM_phase('Bragg2', 110.043*MHz, 0.0, self.t0, 0)
+        self.Bragg.set_AOM_phase('Bragg2', 110.043*MHz, phase, self.t0, 1)
+        # self.Bragg.set_AOM_phase('Bragg2', 110.128*MHz, phase, self.t0, 2)
+        
+        self.Bragg.set_AOM_phase('Dipole', self.Bragg.freq_Dipole, 0.0, self.t0, 0)
+        self.Bragg.set_AOM_phase('Dipole', self.Bragg.freq_Dipole, 0.0, self.t0, 1)
+        # self.Bragg.set_AOM_phase('Dipole', self.Bragg.freq_Dipole, 0.0, self.t0, 2)
+        
+        self.Bragg.set_AOM_phase('Dipole', self.Bragg.freq_Homodyne, 0.0, self.t0, 0)
+        self.Bragg.set_AOM_phase('Dipole', self.Bragg.freq_Homodyne, 0.0, self.t0, 1)
+        # self.Bragg.set_AOM_phase('Dipole', self.Bragg.freq_Homodyne, 0.0, self.t0, 2)
         
         
-        self.Bragg.set_AOM_freqs([("Bragg2",freq)])
+        self.Bragg.switch_profile(0)
+        
+    
             
         self.MOTs.AOMs_off(self.MOTs.AOMs)
         delay(15*ms)
@@ -125,16 +140,22 @@ class Bragg_scanning_exp(Scan1D, TimeFreqScan, EnvExperiment):
         self.Bragg.set_AOM_scales([("Dipole",0.2 ), ("Homodyne",0.2)])
         self.Bragg.AOMs_off(['Homodyne'])
         
-        self.Bragg.bragg_pulse(pulse_time)  # velocity selection        
+        # with parallel:
+        #     self.Bragg.switch_profile(1)
+        #     delay(1*us)  # offset by half a micro second
         
-        ## add in additional pulses for testing here
-
         
+        self.Bragg.bragg_pulse(4.5*us)
+        delay(self.interaction_time)
+        self.Bragg.bragg_pulse(9*us)
         with parallel:
-            delay(self.drift_time)
-            # with sequential:
-                # self.MOTs.set_current(0.0)
-                # self.MOTs.set_current_dir(0)
+            delay(self.interaction_time)
+            self.Bragg.switch_profile(1)
+        self.Bragg.bragg_pulse(4.5*us)
+        
+        
+        delay(self.drift_time)
+
         self.MOTs.take_MOT_image(self.Camera)
         self.Bragg.set_AOM_attens([("Dipole",4.0 ), ("Homodyne",self.Bragg.atten_Homodyne)])
         self.Bragg.set_AOM_scales([("Dipole",0.8 ), ("Homodyne",self.Bragg.scale_Homodyne)])

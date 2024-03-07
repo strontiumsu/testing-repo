@@ -148,7 +148,7 @@ class ThreePhoton698_Rabi_Scan_v2(Scan1D, TimeFreqScan, EnvExperiment):
         self.MOTs.AOMs_on(['3P0_repump', '3P2_repump']) #make sure all atoms go to ground state
         self.MOTs.set_current_dir(1) # XXX let MOT field go to zero and switch H-bridge, 5ms
         
-        h_bridge_current = 0.1 if alignment else 6.0
+        h_bridge_current = 1.0 if alignment else 6.4
         self.MOTs.set_current(h_bridge_current)
         if alignment: 
             delay(20*ms)
@@ -165,36 +165,36 @@ class ThreePhoton698_Rabi_Scan_v2(Scan1D, TimeFreqScan, EnvExperiment):
         #delay(3*ms)
         self.ThPh.threePhoton_pulse(pulse_time) #drive 3P0
         self.MOTs.set_current(0.0)
-        self.MOTs.push()
         
-        self.MOTs.AOMs_on(['3P0_repump', '3P2_repump'])
-        delay(1.5*ms)
-        self.MOTs.take_MOT_image(self.Camera) 
+        # self.MOTs.push()
+        
+        # # if self.FS:
+        # #     self.Bragg.set_AOM_attens([("Dipole",4.0 )])
+        # self.MOTs.AOMs_on(['3P0_repump', '3P2_repump'])
+        # delay(1*ms)
+        # self.MOTs.take_MOT_image(self.Camera) 
         
         if self.FS:
             self.Bragg.set_AOM_attens([("Dipole",4.0 ), ("Homodyne",3.0)])
         
-        #if alignment or self.FS:           # aligning with 689
         #if alignment:
         #    self.MOTs.push()
         #    self.MOTs.take_MOT_image(self.Camera)
         #    delay(5*ms)
-            
-            
-        #delay(2*ms)
-        #self.MOTs.set_current(0.0)
+
         delay(30*ms)
 
-        # if not alignment: # 698 beam
-        #     self.MOTs.push()
-        #     self.MOTs.take_MOT_image(self.Camera)  
-        # delay(15*ms)
-        # self.MOTs.set_current_dir(0)
-        # delay(5*ms)  
+        if not alignment: # 698 beam
+            self.MOTs.push()
+            self.MOTs.take_MOT_image(self.Camera)  
+        delay(15*ms)
+        self.MOTs.set_current_dir(0)
+        delay(5*ms)  
         
         #process and output
         self.MOTs.atom_source_on() # just keeps AOMs warm
         self.MOTs.AOMs_on(self.MOTs.AOMs) # just keeps AOMs warm
+        self.Bragg.set_AOM_attens([("Dipole",4.0 ), ("Homodyne",3.0)])
 
         self.Camera.process_image(save=True, name='', bg_sub=True)
 
