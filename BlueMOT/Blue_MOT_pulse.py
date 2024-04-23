@@ -43,7 +43,7 @@ class Blue_MOT_pulse_exp(EnvExperiment):
         
     def prepare(self):
         # initial datasets for the aoms and mot coils, does not run on core
-        self.MOTs.prepare_aoms(int(self.pulses*1.5))
+        self.MOTs.prepare_aoms()
         self.MOTs.prepare_coils()
         
         if self.image: self.Camera.camera_init()

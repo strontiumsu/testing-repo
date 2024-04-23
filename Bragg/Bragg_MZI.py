@@ -64,7 +64,7 @@ class Bragg_MZI_exp(Scan1D, EnvExperiment):
     
     def prepare(self):
     #prepare/initialize mot hardware and camera
-        self.MOTs.prepare_aoms(N=50)
+        self.MOTs.prepare_aoms()
         self.MOTs.prepare_coils()
         self.Bragg.prepare_aoms()
         self.Camera.camera_init()

@@ -43,9 +43,10 @@ class _Camera(EnvExperiment):
         self.xsize = 170
         self.ysize = 112
         self.current_image = np.zeros((self.xsize, self.ysize)) 
-        self.background_image = np.zeros((self.xsize, self.ysize))  
+        self.background_image = np.zeros((self.xsize, self.ysize)) 
         
-        
+    def prep_datasets(self,x):
+        self.set_dataset("detection.counts",x, broadcast=True)    
         
     def camera_init(self):
         # set camera settings
@@ -62,25 +63,22 @@ class _Camera(EnvExperiment):
         self.xdata = np.vstack((X.ravel(), Y.ravel()))
         
         self.ind = 0
-        
 
-        
         #mot ranges horizontal push
-        # self.y1 = 15
-        # self.y2 = 57
+        self.y1 = 70
+        self.y2 = 200
 
+        self.x1 = 100
+        self.x2 = 270
+        #self.x3 = 200
         
-        # self.x1 = 110
-        # self.x2 = 172
-        # self.x3 = 200
-        
-        # mot ranges vertical push
-        self.y1 = 17
-        self.y2 = 60
-        self.y3 = 145
+        # # mot ranges vertical push
+        # self.y1 = 17
+        # self.y2 = 60
+        # self.y3 = 145
 
-        self.x1 = 165
-        self.x2 = 195
+        # self.x1 = 165
+        # self.x2 = 195
  
                   
     def arm(self):   
@@ -136,9 +134,11 @@ class _Camera(EnvExperiment):
         #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
         
         #Ranges for vertical push
-        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x2, self.y1:self.y3])))), broadcast=False)
-        self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))), broadcast=True)
+        #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x2, self.y1:self.y3])))), broadcast=False)
         
+        #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))), broadcast=True)
+        self.set_dataset(f"detection.images.counts",int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/87), broadcast=True)
+        self.set_dataset("detection.images.total_counts",int(np.sum(self.current_image)), broadcast=True)
         self.ind += 1
         
         
@@ -155,6 +155,12 @@ class _Camera(EnvExperiment):
         
         
         display_image = np.copy(self.current_image)
+        
+        # Display for rMOT
+        display_image[self.x1:self.x2,   self.y2] = 200
+        display_image[self.x1,   self.y1:self.y2+1] = 200
+        display_image[self.x2,   self.y1:self.y2+1] = 200
+        display_image[self.x2,   self.y1:self.y2+1] = 200
         
         #display for Bragg
         # display_image[  80:85, 140:145] = 50
@@ -228,8 +234,12 @@ class _Camera(EnvExperiment):
     def get_push_stats_temp(self) -> TInt32:
         return int(10**6*self.get_dataset('detection.images.counts'))
     
-    def get_count_stats(self) -> TInt32:
+    def get_count_stats(self,i) -> TInt32:
+        self.mutate_dataset("detection.counts", i, self.get_dataset('detection.images.counts'))
         return self.get_dataset('detection.images.counts')
+    
+    def get_totalcount_stats(self) -> TInt32:
+        return self.get_dataset('detection.images.total_counts')
     
     def get_peak(self) -> TInt32:
         img = np.array(self.get_dataset("detection.images.current_image"))

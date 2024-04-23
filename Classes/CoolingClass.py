@@ -12,7 +12,6 @@ import numpy as np
 
 import sys
 sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
-from NovaTechClass import _NovaTech
 
 
 class _Cooling(EnvExperiment):
@@ -24,27 +23,20 @@ class _Cooling(EnvExperiment):
         self.setattr_device("ttl5") # for turning on and off modulation channel
         self.setattr_device("ttl6") # for switching to single freq channel
         self.setattr_device("ttl3") # MOT coil direction
-        self.setattr_device("ttl1") # Push beam shutter
-        self.setattr_device("ttl0") # Zeeman and 2D MOT
+        self.setattr_device("ttl0") # shutter TTLs
         
         ## AOMS
-        
-        self.nova = _NovaTech(self)
         
         # RF synth sources
         self.setattr_device('urukul1_cpld')
         
-        self.nova = _NovaTech(self)
-        
         # names for all our AOMs
         self.AOMs = ["3D", "3P0_repump", "3P2_repump", 'Probe']
-        # self.AOMs = ['Zeeman', '2D', "3D", "Probe", "3P0_repump", "3P2_repump", '688_shelf']
-        self.nova_AOMs = ['Zeeman', '2D']
         
         # default values for all params for all AOMs
-        self.scales = [0.8, 0.8, 0.8, 0.8, 850, 800]     
+        self.scales = [0.8, 0.8, 0.8, 0.8]     
         self.attens = [6.0, 6.0, 14.0, 6.0] # last two are for nova tech and are scaled between 0 and 1024  
-        self.freqs = [90.0, 100.0, 80.0, 210.0, 220.0, 195.0] 
+        self.freqs = [90.0, 100.0, 80.0, 200.0] 
    
         self.urukul_channels = [self.get_device("urukul1_ch0"),
                                 self.get_device("urukul1_ch1"),
@@ -59,13 +51,6 @@ class _Cooling(EnvExperiment):
             self.setattr_argument(f"scale_{AOM}", NumberValue(self.scales[i], min=0.0, max=0.9), f"{AOM}_AOMs")
             self.setattr_argument(f"atten_{AOM}", NumberValue(self.attens[i], min=1.0, max=30), f"{AOM}_AOMs")
             self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50*1e6, max=350*1e6, scale=1e6, unit='MHz'),  f"{AOM}_AOMs")
-        
-        for j in range(len(self.nova_AOMs)):
-            i = j + len(self.AOMs)
-            AOM = self.nova_AOMs[j]
-            self.setattr_argument(f"scale_{AOM}", NumberValue(self.scales[i], min=0.0, max=1024.0), f"{AOM}_AOMs")
-            self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50*1e6, max=350*1e6, scale=1e6, unit='MHz'),  f"{AOM}_AOMs")
-        
         
         self.atom_source = False # flag to keep track of whether or not 2D and zeeman are on
         
@@ -86,7 +71,7 @@ class _Cooling(EnvExperiment):
         self.setattr_argument("rmot_bb_current",NumberValue(0.25,min=0.0,max=5.00,
                       unit="A"),"MOT coil driver")  # broadband mot current
         
-        self.setattr_argument("rmot_bb_duration",NumberValue(10.0*1e-3,min=4.0*1e-3,max=100*1e-3,scale = 1e-3,
+        self.setattr_argument("rmot_bb_duration",NumberValue(10.0*1e-3,min=0.0*1e-3,max=100*1e-3,scale = 1e-3,
                       unit="ms"),"MOT coil driver")  # how long to old broad band 
         
         self.setattr_argument("rmot_ramp_duration",NumberValue(100.0*1e-3,min=0.0,max=200*1e-3,scale = 1e-3,
@@ -120,19 +105,11 @@ class _Cooling(EnvExperiment):
     # AOM Functions
     #<><><><><><><>
        
-    def prepare_aoms(self, N=4):
+    def prepare_aoms(self):
         self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_Probe]
         self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_Probe]                     
         self.freqs = [self.freq_3D, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_Probe]
                 
-        self.nova.table_init()
-               
-        ind = 0
-        for _ in range(N):
-            self.nova.table_write(ind, 0, 0, 0, 0)
-            self.nova.table_write(ind+1, self.freq_Zeeman/2/1e6, self.scale_Zeeman, self.freq_2D/2/1e6, self.scale_2D)
-            ind += 2
-        self.nova.table_start()
         
     @kernel
     def init_aoms(self, on=False):
@@ -162,12 +139,11 @@ class _Cooling(EnvExperiment):
         delay(100*ms)
         self.ttl3.output()
         delay(5*ms)
-        self.ttl1.output()
-        delay(5*ms)
         self.ttl0.output()
         delay(5*ms)
-        self.ttl0.on()
+        self.ttl0.off()
         delay(5*ms)
+        self.atom_source = False
         
         
     # basic AOM methods
@@ -218,21 +194,14 @@ class _Cooling(EnvExperiment):
     @kernel 
     def atom_source_on(self):
         if not self.atom_source:
-            delay(-80*us)
-            self.ttl0.off()
-            delay(5*us)
             self.ttl0.on()
             self.atom_source = True
-            delay(75*us)
     @kernel 
     def atom_source_off(self):
         if self.atom_source:
-            delay(-80*us)
             self.ttl0.off()
-            delay(5*us)
-            self.ttl0.on()
             self.atom_source = False
-            delay(75*us)
+            
         
     
     #<><><><><><><><>
@@ -281,9 +250,10 @@ class _Cooling(EnvExperiment):
             self.ttl3.on()
         
     @kernel
-    def Blackman_ramp_up(self):
+    def Blackman_ramp_up(self, cur=-1.0):
+        if cur ==-1.0: cur = self.bmot_current
         for step in range(0, int((self.Npoints+1)//2)):           
-            self.dac_0.write_dac(0, self.bmot_current*self.window[step])
+            self.dac_0.write_dac(0, cur*self.window[step])
             self.dac_0.load()
             delay(self.dt)
     
@@ -293,13 +263,41 @@ class _Cooling(EnvExperiment):
             self.dac_0.write_dac(0, self.bmot_current*self.window[step])
             self.dac_0.load()
             delay(self.dt)
+    
+    @kernel
+    def linear_ramp_down_capture(self, time):
+        dt = time/self.Npoints
+        for step in range(int(self.Npoints)):            
+            self.dac_0.write_dac(0, self.bmot_current+((self.rmot_bb_current-self.bmot_current)/time)*step*dt)
+            self.dac_0.load()
+            delay(dt)
         
     @kernel
     def linear_ramp(self, bottom, top, time, Npoints):
         dt = time/Npoints
         for step in range(1, int(Npoints)):            
             self.dac_0.write_dac(0, bottom + (top-bottom)/time*step*dt)
-            self.dac_0.write_dac(1,10-5/time*step*dt)
+            #self.dac_0.write_dac(1,10-5/time*step*dt)
+            self.dac_0.load()
+            delay(dt)
+    @kernel
+    def bb_capture_ramps(self, d0, df, ddev0, ddevf, time, Npoints):
+        dt = time/Npoints
+        self.set_current(self.rmot_bb_current)
+        for step in range(1, int(Npoints)):            
+            self.dac_0.write_dac(1, 0.143*(d0 + (df-d0)/time*step*dt))
+            self.dac_0.write_dac(2, -0.0358*(ddev0 + (ddevf-ddev0)/time*step*dt)+1.2)
+            self.dac_0.load()
+            delay(dt)
+    
+    @kernel
+    def bb_compression_ramp(self, d0, df, ddev0, ddevf, time, Npoints):
+        dt = time/Npoints
+        self.set_current(self.rmot_sf_current)
+        for step in range(1, int(Npoints)):
+            self.dac_0.write_dac(0, self.rmot_bb_current + (self.rmot_sf_current-self.rmot_bb_current)/time*step*dt)            
+            self.dac_0.write_dac(1, 0.143*(d0 + (df-d0)/time*step*dt))
+            self.dac_0.write_dac(2, -0.0358*(ddev0 + (ddevf-ddev0)/time*step*dt)+1.2)
             self.dac_0.load()
             delay(dt)
             
@@ -313,7 +311,26 @@ class _Cooling(EnvExperiment):
         self.dac_0.write_dac(2, amp)
         self.dac_0.load()
         
-    
+    @kernel
+    def cavity_ramp(self, amp, time, Npoints):
+        dt = time/Npoints
+        for step in range(1, int(Npoints)):            
+            self.dac_0.write_dac(3, 8.65 - amp/2 + amp*step*dt/time)
+            self.dac_0.load()
+            delay(dt)
+        self.dac_0.write_dac(3, 8.65)
+        self.dac_0.load()
+        
+    @kernel
+    def cavity_scan_trig(self):
+        self.dac_0.write_dac(3, 0.0)
+        self.dac_0.load()
+        delay(1*ms)
+        self.dac_0.write_dac(3, 4.0)
+        self.dac_0.load()
+        delay(4*ms)
+        self.dac_0.write_dac(3, 0.0)
+        self.dac_0.load()
         
     # this is kinda clunky, fix at some point
     @kernel
@@ -387,12 +404,26 @@ class _Cooling(EnvExperiment):
         self.Blackman_ramp_up()
         self.hold(self.bmot_load_duration)
         
+        ### Ramp transfer sequence
+        tramp = 100*ms
+        dt = tramp/int(self.Npoints)
+        for step in range(1, int(self.Npoints)):            
+            self.dac_0.write_dac(0, self.bmot_current + 1.0/tramp*step*dt)
+            self.dac_0.load()
+            self.set_AOM_attens([("3D",6+10*step/int(self.Npoints))])
+            delay(dt)
+        self.dac_0.write_dac(0, self.bmot_current + 1.0)
+        self.dac_0.load()
+        #########################################
         
-        with parallel:
-            self.atom_source_off()        
-            self.AOMs_off(['3D'])
-            self.set_current(self.rmot_bb_current)
-            self.ttl5.off()  # switch on  broadband mode (ch1)
+        #with parallel:
+        self.atom_source_off()        
+        self.AOMs_off(['3D'])
+        delay(0.5*us)
+        self.set_current(self.rmot_bb_current)
+        self.ttl5.off()  # switch on  broadband mode (ch1)
+        
+        #self.bb_capture_ramps(-3.5, -3, 7, 6, self.rmot_bb_duration, self.Npoints)
             
         delay(self.rmot_bb_duration)
         
@@ -406,6 +437,56 @@ class _Cooling(EnvExperiment):
  
         delay(self.rmot_sf_duration)
         self.ttl6.off()
+        self.set_current(0.0)
+    
+    @kernel
+    def rMOT_broadband_pulse(self, time):
+        self.core.break_realtime()
+        self.ttl5.on()  # make sure moglabs ch1 off
+        self.ttl6.off()
+        self.atom_source_on()        
+        self.AOMs_on(["3D", "3P0_repump", "3P2_repump"])
+        self.ttl5.off()  # switch on  broadband mode (ch1)
+        self.set_current_dir(0)
+        self.Blackman_ramp_up()
+        self.hold(self.bmot_load_duration)
+        
+        ### Ramp transfer sequence
+        tramp = 100*ms
+        dt = tramp/int(self.Npoints)
+        for step in range(1, int(self.Npoints)):            
+            self.dac_0.write_dac(0, self.bmot_current + 1.0/tramp*step*dt)
+            self.dac_0.load()
+            self.set_AOM_attens([("3D",6+10*step/int(self.Npoints))])
+            delay(dt)
+        self.dac_0.write_dac(0, self.bmot_current + 1.0)
+        self.dac_0.load()
+        #########################################
+        
+        self.atom_source_off()   
+        delay(50*ms)
+        self.AOMs_off(['3D'])
+        delay(0.5*us)
+
+        self.set_current(self.rmot_bb_current)
+        delay(self.rmot_bb_duration)
+   
+        #self.bb_capture_ramps(-3.5, -3.5, 7, 7, self.rmot_bb_duration, self.Npoints)
+        
+        # with parallel:
+        #     with sequential: 
+        #         delay(10*ms)
+        #         self.AOMs_off(["3P0_repump","3P2_repump"])
+        #     delay(self.rmot_bb_duration)
+        #delay(10*ms)
+        #self.linear_ramp(self.rmot_bb_current, self.rmot_sf_current, self.rmot_ramp_duration, self.Npoints)
+        #self.bb_compression_ramp(-3.5, -3.5, 7,7, self.rmot_ramp_duration, self.Npoints)
+        # with parallel:
+        #     self.ttl5.on()
+        #     self.ttl6.on()
+ 
+        # delay(self.rmot_sf_duration)
+        # self.ttl6.off()
         self.set_current(0.0)
     
     @kernel
@@ -429,10 +510,11 @@ class _Cooling(EnvExperiment):
     @kernel
     def take_background_image_exp(self, cam):
         cam.arm()
-        delay(500*ms)
+        delay(2000*ms)
         self.take_MOT_image(cam)
         delay(200*ms)
         cam.process_background()
+
         
     @kernel
     def take_MOT_image(self, cam):

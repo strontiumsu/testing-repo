@@ -39,12 +39,25 @@ class Set_Analog_IO(EnvExperiment):
             self.dac_0.init()
             #self.adc_0.init()
             delay(1*ms)
-            self.dac_0.write_dac(0,self.DAC_voltage)
+            #self.dac_0.write_dac(1,self.DAC_voltage)
+            self.dac_0.write_dac(1,0.0) #offset voltage
+            self.dac_0.write_dac(2,1.2) #ddev voltage
             self.dac_0.load()
-           
             
-                       
-
+            d0=-5
+            df=-1
+            ddev0=10
+            ddevf=2
+            time=10000*ms
+            Npoints=100
+            dt = time/Npoints
+            for step in range(1, int(Npoints)):            
+                self.dac_0.write_dac(1, 0.143*(d0 + (df-d0)/time*step*dt))
+                self.dac_0.write_dac(2, -0.0358*(ddev0 + (ddevf-ddev0)/time*step*dt)+1.2)
+                self.dac_0.load()
+                delay(dt)
+           
+        
 
              
        

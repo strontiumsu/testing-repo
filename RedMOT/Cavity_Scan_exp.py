@@ -15,11 +15,11 @@ from artiq.experiment import EnvExperiment, kernel, ms,us, NumberValue, delay, p
 import numpy as np
 from CoolingClass import _Cooling
 from CameraClass import _Camera
+from BraggClass import _Bragg
 
-
-class Red_MOT_pulse_exp(EnvExperiment):
+class Cavity_Scan_exp(EnvExperiment):
     """
-    Red_MOT_pulse_exp
+    Cavity_Scan_exp
     This experiment uses the CoolingClass to control the relevant AOMs and MOT
     coils to pulse the Red MOT off and on, taking an image each time to display to the user
     at detection.images.current_image.
@@ -37,7 +37,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
         self.setattr_device("scheduler")
         self.MOTs = _Cooling(self)
         self.Camera = _Camera(self)
-
+        self.Bragg = _Bragg(self)
 
         # attributes for this experiment
         self.setattr_argument("pulses", NumberValue(5,min=0, max=100), "parameters")
@@ -50,11 +50,11 @@ class Red_MOT_pulse_exp(EnvExperiment):
         # initial datasets for the aoms and mot coils, does not run on core
         self.MOTs.prepare_aoms()
         self.MOTs.prepare_coils()
-
+        self.Bragg.prepare_aoms()
         # Initialize camera
         self.Camera.camera_init()
-        
-        self.Camera.prep_datasets(np.full(int(self.pulses), np.nan))
+
+
 
     @kernel
     def run(self):
@@ -63,6 +63,7 @@ class Red_MOT_pulse_exp(EnvExperiment):
         self.MOTs.init_coils()
         self.MOTs.init_ttls()
         self.MOTs.init_aoms(on=False)
+        self.Bragg.init_aoms(on=True)
         
         delay(50*ms)
         self.MOTs.take_background_image_exp(self.Camera)
@@ -72,12 +73,26 @@ class Red_MOT_pulse_exp(EnvExperiment):
             self.Camera.arm()
             delay(200*ms)
             self.MOTs.rMOT_pulse()
-            #self.MOTs.rMOT_broadband_pulse(int(m)*ms)
-            #delay(int((m)*250)*us) ##load into dipole trap if desired
-            delay(self.wait_time)
+            # delay(5*ms)
+            # self.MOTs.set_current_dir(1)
+            # self.MOTs.set_current(0.2)
+            
+            delay(self.wait_time) ##load into dipole trap if desired
+            
+            #drop atoms
+            #self.Bragg.set_AOM_attens([("Homodyne",30.0)])
+            #delay(5*ms)
+            
+            #move atoms
+            #self.Bragg.set_AOM_freqs([("Homodyne",79.9*10**6)])
+            #delay(5*ms)
+            #self.MOTs.cavity_ramp(0.8, 5*ms, 51)
+            self.MOTs.cavity_scan_trig()
+            
             if self.push_beam:
                 self.MOTs.push()
             
+            self.MOTs.set_current(0.0)
             self.MOTs.take_MOT_image(self.Camera)
             delay(10*ms)
             self.Camera.process_image(bg_sub=True)
@@ -85,9 +100,10 @@ class Red_MOT_pulse_exp(EnvExperiment):
             self.core.wait_until_mu(now_mu())
             delay(200*ms)
             self.MOTs.AOMs_off(['3P0_repump', '3P2_repump', '3D'])
-
-            self.Camera.get_count_stats(m)
+            self.Bragg.set_AOM_attens([("Homodyne",3.0)])
+            self.Bragg.set_AOM_freqs([("Homodyne",80.0*10**6)])
+            #self.Camera.get_count_stats(m)
+            self.MOTs.set_current_dir(0)
             delay(self.wait_time)
-            
         self.MOTs.AOMs_on(self.MOTs.AOMs)
         self.MOTs.atom_source_on()
