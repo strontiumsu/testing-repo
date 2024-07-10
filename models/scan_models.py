@@ -5,7 +5,7 @@ Created on Wed Dec 14 12:35:21 2022
 @author: E. Porter
 """
 
-from scan_framework.models import Model, TimeFreqModel, Lor, Sine, MHz, TimeModel, Exp, Poly, Power, ExpSine, Gauss
+from scan_framework.models import Model, TimeFreqModel, Lor,FreqModel, Sine, MHz, TimeModel, Exp, Poly, Power, ExpSine, Gauss
 import numpy as np
 from scipy import constants
 
@@ -313,6 +313,18 @@ class PicoModel(TimeModel):
          
     x_scale = 1000
     y_scale = 1e6
+    
+class FreqModelGen(FreqModel):
+    namespace='FreqModel'
+    y_label='Transition prob.'
+    enable_histograms=False
+    x_label='Frequency'
+    x_units = 'MHz'
+    plot_title = 'Frequency Scan'
+    fit_function = Gauss
+         
+    x_scale = 1e6
+    y_scale = 1 
     
     
 class LinearModel(TimeModel):

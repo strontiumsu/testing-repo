@@ -57,7 +57,7 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         
     def prepare(self):
         #prepare/initialize mot hardware and camera
-        self.MOTs.prepare_aoms(30)
+        self.MOTs.prepare_aoms()
         self.MOTs.prepare_coils()
         self.Camera.camera_init()
         self.Bragg.prepare_aoms()
@@ -101,20 +101,20 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         delay(500*ms)
         self.Camera.arm()
         delay(300*ms)
-        self.MOTs.molasses_power(0.0)
-        delay(100*ms)
+        # self.MOTs.molasses_power(0.0)
+        # delay(100*ms)
 
         
         self.MOTs.AOMs_off(self.MOTs.AOMs)
         delay(10*ms)
         self.MOTs.rMOT_pulse() # generate MOT
         with parallel:
-            self.MOTs.molasses_power(-0.95)
+            # self.MOTs.molasses_power(-0.95)
             delay(self.load_time) # load for fixed time
-            with sequential:
-                delay(5*ms)
-                self.MOTs.ttl6.on()
-        self.MOTs.ttl6.off()
+            # with sequential:
+            #     delay(5*ms)
+            #     self.MOTs.ttl6.on()
+        # self.MOTs.ttl6.off()
         self.Bragg.set_AOM_attens([("Dipole",30.0 )])
         self.Bragg.AOMs_off(["Homodyne"])
         
@@ -130,8 +130,8 @@ class DipoleTrapTemperature_exp(Scan1D, TimeScan, EnvExperiment):
         delay(50*ms)
         self.Camera.process_image(bg_sub=True)
         delay(400*ms)
-        self.MOTs.molasses_power(0.0)
-        delay(50*ms)
+        # self.MOTs.molasses_power(0.0)
+        # delay(50*ms)
         return 0  # return nothing for now, deal with in post
 
     

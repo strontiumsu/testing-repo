@@ -89,8 +89,8 @@ class Cavity_Scan_exp(EnvExperiment):
             #self.MOTs.cavity_ramp(0.8, 5*ms, 51)
             self.MOTs.cavity_scan_trig()
             
-            if self.push_beam:
-                self.MOTs.push()
+            
+
             
             self.MOTs.set_current(0.0)
             self.MOTs.take_MOT_image(self.Camera)

@@ -61,19 +61,16 @@ class Red_MOT_pulse_exp(EnvExperiment):
         # initial devices
         self.core.reset()
         self.MOTs.init_coils()
-        self.MOTs.init_ttls()
         self.MOTs.init_aoms(on=False)
         
         delay(50*ms)
         self.MOTs.take_background_image_exp(self.Camera)
         delay(500*ms)
-
         for m in range(int(self.pulses)):
             self.Camera.arm()
             delay(200*ms)
+            #self.MOTs.rMOT_broadband_pulse(50*ms)
             self.MOTs.rMOT_pulse()
-            #self.MOTs.rMOT_broadband_pulse(int(m)*ms)
-            #delay(int((m)*250)*us) ##load into dipole trap if desired
             delay(self.wait_time)
             if self.push_beam:
                 self.MOTs.push()
@@ -89,5 +86,6 @@ class Red_MOT_pulse_exp(EnvExperiment):
             self.Camera.get_count_stats(m)
             delay(self.wait_time)
             
-        self.MOTs.AOMs_on(self.MOTs.AOMs)
+        self.MOTs.AOMs_on(['3P0_repump', '3P2_repump', '3D',"Probe"])
         self.MOTs.atom_source_on()
+

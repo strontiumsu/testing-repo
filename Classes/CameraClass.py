@@ -72,13 +72,18 @@ class _Camera(EnvExperiment):
         self.x2 = 270
         #self.x3 = 200
         
-        # # mot ranges vertical push
-        # self.y1 = 17
-        # self.y2 = 60
-        # self.y3 = 145
-
-        # self.x1 = 165
-        # self.x2 = 195
+        # 689 horisontal push
+        self.ycen = 50
+        self.xcen = 175
+        self.xydev = 35
+        
+        # interferometry
+        self.xint = 150
+        self.intdev = 15
+        self.y0hk = 176
+        self.y2hk = self.y0hk-2*self.intdev
+        self.y2hkm = self.y0hk+2*self.intdev
+        self.y4hk = 100
  
                   
     def arm(self):   
@@ -112,7 +117,7 @@ class _Camera(EnvExperiment):
         # add in a kernel function for delaying camera exposure
         delay(time)
         
-    def process_image(self, save=True, name='', bg_sub=False):
+    def process_image(self, save=True, name='', bg_sub=True):
         # pulls the current image, saves/bg subs as needed. Saves to current image dataset
         self.acquire()
         x1, x2, y1, y2 = self.cam_range
@@ -133,64 +138,62 @@ class _Camera(EnvExperiment):
         #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=False)
         #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
         
-        #Ranges for vertical push
-        #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x2, self.y1:self.y3])))), broadcast=False)
-        
-        #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))), broadcast=True)
-        self.set_dataset(f"detection.images.counts",int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/87), broadcast=True)
-        self.set_dataset("detection.images.total_counts",int(np.sum(self.current_image)), broadcast=True)
-        self.ind += 1
-        
-        
-        # new camera code here:
-        # pix_noise = np.average(self.current_image[120:143, 8:44])
-        # red_counts = np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2])- pix_noise*(self.x3-self.x2)*(self.y2-self.y1)
-        # total_counts = np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])- pix_noise*(self.x3-self.x1)*(self.y2-self.y1)
-        # prob = red_counts/total_counts
-        
-        # self.set_dataset("detection.images.ratio", int(10**6*(prob)), broadcast=False)
-        # self.set_dataset("detection.images.counts", int(red_counts), broadcast=True)
+       
+        # Ranges for 689 spectrsoscopy push
+        # self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.xcen:self.xcen+self.xydev,self.ycen-self.xydev:self.ycen+self.xydev]))/(np.sum(self.current_image[self.xcen-self.xydev:self.xcen+self.xydev, self.ycen-self.xydev:self.ycen+self.xydev])))), broadcast=True)
+        # self.set_dataset(f"detection.images.counts",int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/87), broadcast=True)
+        # self.set_dataset("detection.images.total_counts",int(np.sum(self.current_image)), broadcast=True)
         # self.ind += 1
+        
+         
+        # Ranges for Bragg
+        # +1st order
+        #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.xint:self.xint+self.xydev,self.y2hk-self.intdev:self.y2hk+self.intdev]))/(np.sum(self.current_image[self.xint:self.xint+self.xydev,self.y2hk-self.intdev:self.y0hk+self.intdev])))), broadcast=True)
 
-        
-        
+        # -1st order 
+        #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.xint:self.xint+self.xydev,self.y2hkm-self.intdev:self.y2hkm+self.intdev]))/(np.sum(self.current_image[self.xint:self.xint+self.xydev,self.y0hk-self.intdev:self.y2hkm+self.intdev])))), broadcast=True)
+
         display_image = np.copy(self.current_image)
         
         # Display for rMOT
-        display_image[self.x1:self.x2,   self.y2] = 200
-        display_image[self.x1,   self.y1:self.y2+1] = 200
-        display_image[self.x2,   self.y1:self.y2+1] = 200
-        display_image[self.x2,   self.y1:self.y2+1] = 200
-        
-        #display for Bragg
-        # display_image[  80:85, 140:145] = 50
-        # display_image[  80:85, 165:170] = 50
-        # display_image[  80:85, 190:195 ] = 50
-        
-        # Display for horizontal push
-        # display_image[self.x1:self.x3+1,   self.y2] = 200
+        # display_image[self.x1:self.x2,   self.y2] = 200
         # display_image[self.x1,   self.y1:self.y2+1] = 200
         # display_image[self.x2,   self.y1:self.y2+1] = 200
-        # display_image[self.x3,   self.y1:self.y2+1] = 200
-        # display_image[self.x2:self.x3+1,  self.y1] = 200
-        # display_image[self.x2:self.x3+1,   self.y2] = 200
         # display_image[self.x2,   self.y1:self.y2+1] = 200
-        # display_image[self.x3,   self.y1:self.y2+1] = 200
-        
-        # #Display for veritcal push
-        # display_image[self.x1:self.x2+1,  self.y1] = 200
-        # display_image[self.x1:self.x2+1,   self.y2] = 200
-        # display_image[self.x1:self.x2+1,   self.y3] = 200
-        # display_image[self.x1,   self.y1:self.y3+1] = 200
-        # display_image[self.x2,   self.y1:self.y3+1] = 200
         
         
+        #Display for horizontal push
+        display_image[self.xcen-self.xydev:self.xcen+self.xydev+1, self.ycen] = 200
+        display_image[self.xcen-self.xydev,   self.ycen-self.xydev:self.ycen+1] = 200
+        display_image[self.xcen,   self.ycen-self.xydev:self.ycen+1] = 200
+        display_image[self.xcen+self.xydev,   self.ycen-self.xydev:self.ycen+1] = 200
+        display_image[self.xcen-self.xydev:self.xcen+self.xydev+1,  self.ycen-self.xydev] = 200
+        display_image[self.xcen:self.xcen+self.xydev+1,   self.ycen] = 200
+        display_image[self.xcen,   self.ycen-self.xydev:self.ycen+1] = 200
+        display_image[self.xcen+self.xydev,   self.ycen-self.xydev:self.ycen+1] = 200
+        
+        #Display for Bragg
+        #+1 order
+        # display_image[self.xint:self.xint+self.xydev+1, self.y0hk+self.intdev] = 200
+        # display_image[self.xint,   self.y0hk+self.intdev:self.y2hk-self.intdev+1] = 200
+        # display_image[self.xint:self.xint+self.xydev+1, self.y2hk-self.intdev] = 200
+        # display_image[self.xint+self.xydev,   self.y0hk+self.intdev:self.y2hk-self.intdev+1] = 200
+        # display_image[self.xint:self.xint+self.xydev+1, self.y0hk-self.intdev] = 200
+        
+        #-1 order
+        display_image[self.xint:self.xint+self.xydev+1, self.y0hk-self.intdev] = 200
+        display_image[self.xint,   self.y0hk-self.intdev:self.y2hkm+self.intdev+1] = 200
+        display_image[self.xint:self.xint+self.xydev+1, self.y2hkm+self.intdev] = 200
+        display_image[self.xint+self.xydev,   self.y0hk-self.intdev:self.y2hk+self.intdev+1] = 200
+        display_image[self.xint:self.xint+self.xydev+1, self.y0hk+self.intdev] = 200
+        
+        #display_image[self.xint-self.xydev:self.xint, self.y0hk-2:self.y0hk+2] = 50 #0hk marker
+        #display_image[  80:85, 165:170] = 50
+        #display_image[  80:85, 190:195 ] = 50
+
 
         display_image = np.where(display_image > 0, display_image, 0)
         self.set_dataset("detection.images.current_image", display_image, broadcast=True)
-        
-        #self.set_dataset("detection.images.MOT_range", [self.x1, self.x2, self.x3, self.y1, self.y2], broadcast=False)
-        #self.set_dataset("detection.images.MOT_range", [self.x1, self.x2, self.x3, self.y1, self.y2], broadcast=False)
         
         self.disarm()
         

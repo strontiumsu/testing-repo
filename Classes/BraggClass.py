@@ -32,10 +32,10 @@ class _Bragg(EnvExperiment):
         # default values for all params for all AOMs
         self.scales = [0.8, 0.8, 0.8, 0.8]
         
-        self.attens = [4.0, 18.0, 5.0, 3.0]
+        self.attens = [14.0, 11.0, 11.0, 30.0]
         # self.attens = [18.0, 5.0, 20.0, 20.0]
         
-        self.freqs = [80.0, 110.0, 110.00000, 80.0]  
+        self.freqs = [80.0, 100.0, 100.0, 80.0]  
         # self.freqs = [110.0, 110.0, 80.00000, 200.0]  
         
         self.urukul_channels = [self.get_device("urukul2_ch0"),
@@ -60,23 +60,18 @@ class _Bragg(EnvExperiment):
     def init_aoms(self, on=False): 
         delay(10*ms)
         self.urukul2_cpld.init()
-
-        for i in range(len(self.AOMs)):
+        
+        i = -1
+        for ch in self.urukul_channels:
+            i += 1
             delay(10*ms)
-           
-            ch =  self.urukul_channels[i]
-            
             ch.init()            
-            set_f = ch.frequency_to_ftw(self.freqs[i])
-            set_asf = ch.amplitude_to_asf(self.scales[i])
-            ch.set_mu(set_f, asf=set_asf)
+            ch.set(self.freqs[i], amplitude=self.scales[i])
             ch.set_att(self.attens[i])
             
-            if on:
-                ch.sw.on()
-            else:                
-                ch.sw.off()
-        delay(10*ms)
+            if on: ch.sw.on()
+            else: ch.sw.off()
+        delay(10 * ms)
             
         
     # basic AOM methods
@@ -143,9 +138,9 @@ class _Bragg(EnvExperiment):
  
     @kernel
     def bragg_pulse(self,time):
-        self.AOMs_on(["Bragg1", "Bragg2"])
+        self.AOMs_on(["Bragg2", "Bragg1"])        
         delay(time)
-        self.AOMs_off(["Bragg1", "Bragg2"])
+        self.AOMs_off(["Bragg2", "Bragg1"])
         
     
     def index_artiq(self, aom) -> TInt32:
