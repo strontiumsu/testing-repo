@@ -5,8 +5,6 @@ Created on Thu Jun 15 13:50:24 2023
 @author: sr
 """
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import *
 import numpy as np

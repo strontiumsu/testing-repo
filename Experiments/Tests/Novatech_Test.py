@@ -4,8 +4,6 @@ Created on Thu Jan 12 09:32:14 2023
 
 @author: sr
 """
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 import time
 
 from artiq.experiment import delay, kernel, ms, EnvExperiment, us, now_mu, parallel, sequential, NumberValue

@@ -6,8 +6,6 @@ Created on Mon Aug 26 11:07:04 2024
 """
 
 from scan_framework import Scan1D
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import *
 

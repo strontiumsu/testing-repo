@@ -9,8 +9,6 @@ from scan_framework import Scan1D, TimeScan
 from artiq.experiment import *
 import numpy as np
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from CoolingClass import _Cooling
 from CameraClass import _Camera

@@ -10,8 +10,6 @@ from artiq.experiment import *
 import numpy as np
 import time
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 # from CoolingClass import _Cooling
 # from ThreePhotonClass import _ThreePhoton

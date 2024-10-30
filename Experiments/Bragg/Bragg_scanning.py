@@ -5,8 +5,6 @@ Created on Wed Jan 24 16:33:03 2024
 @author: E. Porter
 """
 from scan_framework import Scan1D, TimeFreqScan
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 from artiq.experiment import EnvExperiment, BooleanValue, kernel, now_mu, ms, us, MHz,kHz,  NumberValue, delay, parallel, sequential
 
 # imports

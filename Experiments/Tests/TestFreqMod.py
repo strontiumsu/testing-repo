@@ -8,8 +8,6 @@ Created on Mon Oct  2 12:17:42 2023
 from artiq.experiment import *
 import numpy as np
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from ThreePhotonClass import _ThreePhoton
 

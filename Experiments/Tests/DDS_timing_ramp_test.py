@@ -5,8 +5,6 @@ Created on Mon Jul  8 18:41:38 2024
 @author: ejporter
 """
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 
 from artiq.experiment import *

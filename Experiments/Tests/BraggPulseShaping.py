@@ -6,8 +6,6 @@ Created on Thu Apr 25 16:18:04 2024
 """
 
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import EnvExperiment, BooleanValue, kernel, now_mu, us, ms, NumberValue, delay, parallel, sequential
 

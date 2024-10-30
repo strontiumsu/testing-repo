@@ -5,8 +5,6 @@ Created on Mon Jun 26 14:21:08 2023
 @author: E. Porter
 """
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import EnvExperiment, kernel, ms, delay, NumberValue
 

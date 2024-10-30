@@ -5,8 +5,6 @@ Created on Thu Jan 11 16:05:45 2024
 @author: E. Porter
 """
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
 
 from artiq.experiment import EnvExperiment, BooleanValue, kernel, us, ms, NumberValue, delay, parallel, sequential, RTIOUnderflow
 

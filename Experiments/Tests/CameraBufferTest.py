@@ -5,8 +5,6 @@ Created on Wed Feb 15 16:31:28 2023
 @author: E. Porter
 """
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import EnvExperiment, kernel, delay, ms, now_mu
 from CameraClass import _Camera

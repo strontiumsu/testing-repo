@@ -8,8 +8,6 @@ from artiq.coredevice.ad9910 import (
     RAM_DEST_FTW, RAM_MODE_RAMPUP)
 
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import *
 from artiq.coredevice import ad9910

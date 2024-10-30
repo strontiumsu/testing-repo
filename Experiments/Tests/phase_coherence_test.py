@@ -8,8 +8,6 @@ Created on Tue Jul 16 18:16:51 2024
 
 from scan_framework import Scan1D, TimeFreqScan
 from artiq.coredevice import ad9910
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import *
 # imports

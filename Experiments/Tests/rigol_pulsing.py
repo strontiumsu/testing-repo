@@ -6,8 +6,6 @@ Created on Wed Jun 12 14:24:08 2024
 """
 
 from scan_framework import Scan1D, TimeFreqScan
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import *
 

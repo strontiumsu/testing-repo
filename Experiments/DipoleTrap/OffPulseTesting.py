@@ -6,8 +6,6 @@ Created on Wed Oct  4 10:14:24 2023
 """
 
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 
 from artiq.experiment import *

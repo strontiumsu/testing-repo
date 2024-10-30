@@ -11,8 +11,6 @@ import numpy as np
 from scipy.optimize import curve_fit
 from numpy import unravel_index
 
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Classes")
 
 from CoolingClass import _Cooling
 from CameraClass import _Camera

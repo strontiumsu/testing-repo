@@ -6,8 +6,6 @@ Created on Thu Feb  2 11:17:41 2023
 """
 
 # make available artiq classes for us
-import sys
-sys.path.append("C:/Users/sr/Documents/Artiq/artiq-master/repository/Experiments/Classes")
 
 from artiq.experiment import EnvExperiment, kernel, ms,us, NumberValue, delay, parallel, sequential, now_mu,BooleanValue
 
