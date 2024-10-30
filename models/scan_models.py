@@ -127,7 +127,19 @@ class MyModel(TimeFreqModel):
         # ensures data looks a certain way before trying to fit
         return None
 
+class BlankModel(TimeModel):
+    namespace = ''
+    x_label = ''
+    x_unit = ''
+    
+    y_label = ''
+    y_unit = ' '
+    y_scale = 1
+    
+    plot_title = ''
+    enable_histograms = False
 
+    
 class LoadingModel(TimeModel):
 
     # global parameters
