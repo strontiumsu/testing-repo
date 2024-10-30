@@ -5,9 +5,23 @@ Created on Wed Dec 14 12:35:21 2022
 @author: E. Porter
 """
 
-from scan_framework.models import Model, TimeFreqModel, Lor,FreqModel, Sine, MHz, TimeModel, Exp, Poly, Power, ExpSine, Gauss
 import numpy as np
+from scan_framework.models import (
+    Exp,
+    ExpSine,
+    FreqModel,
+    Gauss,
+    Lor,
+    MHz,
+    Model,
+    Poly,
+    Power,
+    Sine,
+    TimeFreqModel,
+    TimeModel,
+)
 from scipy import constants
+
 
 class MyModel(TimeFreqModel):
     
@@ -160,35 +174,28 @@ class LoadingModel(TimeModel):
 class TemperatureModel(TimeModel):
     
     
-    namespace = 'TimeOfFlight'
-    x_label = 'drop time'
+    namespace = 'TOF_temp'
+    x_label = 'TOF time'
     x_unit = 'ms'
     
     y_label = 'variance'
     y_unit = 'pixel squared'
     y_scale = 1e6
     
-    plot_title = 'Cloud Size over time'
+    plot_title = 'Cloud Radius over time'
     enable_histograms = False
     fit_function = Power
     hold = {'alpha':2}
     
     @property
     def main_fit(self):
-        if self.Direction == 'X':
-            return 'tempX'
-        if self.Direction == 'Y':
-            return 'tempY'
-    
-
+        return 'tempX'
     
     def before_validate(self, fit):
         M  = constants.value('atomic mass constant')*87.9
         Kb = constants.value('Boltzmann constant')
-        if self.Direction == 'X':
-            fit.fitresults['tempX'] = 67.8**2*fit.fitresults['A']*1e-12*M/Kb
-        if self.Direction == 'Y':
-            fit.fitresults['tempY'] = 67.8**2*fit.fitresults['A']*1e-12*M/Kb
+        fit.fitresults['tempX'] = self.pix2um**2*fit.fitresults['A']*1e-12*M/Kb
+
             
 class DipoleTemperatureModel(TimeModel):
     
