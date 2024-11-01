@@ -255,7 +255,7 @@ class _Cooling(EnvExperiment):
         assert direc in [0,+1]
 
         self.coils_off() # turn off current
-        delay(10*ms) # wait for current to settle
+        delay(20*ms) # wait for current to settle
 
         if direc == 0: self.ttl3.off() # set appropriate direction
         else: self.ttl3.on()
