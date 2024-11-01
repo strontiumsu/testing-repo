@@ -81,8 +81,8 @@ class Cavity_Scan_exp(EnvExperiment):
             delay(200*ms)
             self.MOTs.rMOT_pulse()
             # delay(5*ms)
-            # self.MOTs.set_current_dir(1)
-            # self.MOTs.set_current(0.2)
+            self.MOTs.set_current_dir(1)
+            self.MOTs.set_current(0.5)
 
             delay(self.wait_time) ##load into dipole trap if desired
 
@@ -96,8 +96,8 @@ class Cavity_Scan_exp(EnvExperiment):
             #     self.Bragg.set_AOM_scales([("Dipole",self.Bragg.scale_Dipole ), ("Homodyne",self.Bragg.scale_Homodyne)])
             #     delay(self.drop_time)
 
-            self.Bragg.set_AOM_attens([("Dipole",30.0 ), ("Homodyne",30.0)])
-            self.Bragg.set_AOM_scales([("Dipole",0.6 ), ("Homodyne",0.1)])
+            self.Bragg.set_AOM_attens([("Dipole",12.0 ), ("Homodyne",30.0)])
+            self.Bragg.set_AOM_scales([("Dipole",0.8 ), ("Homodyne",0.1)])
             self.Bragg.AOMs_off(['Homodyne'])
             #delay(self.drop_time*m/int(self.pulses))
 
@@ -106,7 +106,7 @@ class Cavity_Scan_exp(EnvExperiment):
             self.MOTs.AOMs_on(['Probe'])# turn probe beam on
             self.MOTs.dac_0.write_dac(3, 5.0) #trigger scan
             self.MOTs.dac_0.load()
-            delay(1*ms)
+            delay(3*ms)
             self.MOTs.AOMs_off(['Probe']) #turn off probe beam
 
             self.Bragg.set_AOM_attens([("Dipole",self.Bragg.atten_Dipole ), ("Homodyne",self.Bragg.atten_Homodyne)])
@@ -128,7 +128,7 @@ class Cavity_Scan_exp(EnvExperiment):
             self.MOTs.dac_0.write_dac(3, 0.0)
             self.MOTs.dac_0.load()
 
-
+            
             self.MOTs.set_current_dir(0)
             delay(self.wait_time)
         self.MOTs.AOMs_on(self.MOTs.AOMs)
