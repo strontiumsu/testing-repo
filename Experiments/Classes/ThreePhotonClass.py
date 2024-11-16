@@ -192,9 +192,15 @@ class _ThreePhoton(EnvExperiment):
      
     @kernel 
     def ThPh_pulse(self,t):
-        self.AOMs_on(['Beam1'])
+        self.AOMs_on(['Beam3'])
         delay(t)
-        self.AOMs_off(['Beam1'])
+        self.AOMs_off(['Beam3'])
+        
+    @kernel 
+    def push_pulse(self,t):
+        self.AOMs_on(['Beam2'])
+        delay(t)
+        self.AOMs_off(['Beam2'])
         
     @kernel 
     def threePhoton_Ramsey_pulse(self,tpi,t):

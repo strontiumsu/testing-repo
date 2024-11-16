@@ -15,19 +15,6 @@ from CameraClass import _Camera
 from BraggClass import _Bragg
 
 class Cavity_Scan_exp(EnvExperiment):
-    """
-    Cavity_Scan_exp
-    This experiment uses the CoolingClass to control the relevant AOMs and MOT
-    coils to pulse the Red MOT off and on, taking an image each time to display to the user
-    at detection.images.current_image.
-
-    parameters:
-        <all parameters inherited from CoolingClass>
-        <all parameters inherited from Detection2>
-        pulses: number of times to pulse the red MOT
-        wait_time: how long to wait between pulses
-
-    """
 
     def build(self):
         self.setattr_device("core")

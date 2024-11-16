@@ -66,17 +66,20 @@ class _Camera(EnvExperiment):
         self.ind = 0
 
         #mot ranges horizontal push
-        self.y1 = 70
-        self.y2 = 200
+        self.y1 = 200
+        self.y2 = 600
 
-        self.x1 = 100
-        self.x2 = 270
-        self.x3 = 200
+        self.x1 = 5
+        self.x2 = 50
+        self.x3 = 500
         
         # 689 horisontal push
-        self.ycen = 50
-        self.xcen = 175
+        self.ycen = 150
+        self.xcen = 98
         self.xydev = 35
+        self.xdev1 = 35
+        self.xdev2 = 150
+        self.ydev = 100
         
         # interferometry
         self.xint = 150
@@ -136,14 +139,14 @@ class _Camera(EnvExperiment):
             self.set_dataset(f"detection.images.{name}{self.ind}", self.current_image, broadcast=False)
         
         # Ranges for horizontal push
-        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=False)
+        # self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))/(np.sum(self.current_image[self.x1:self.x3, self.y1:self.y2])))), broadcast=True)
         #self.set_dataset(f"detection.images.counts", int((np.sum(self.current_image[self.x2:self.x3,self.y1:self.y2]))), broadcast=True)
         
        
         # Ranges for 689 spectrsoscopy push
-        #self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.xcen:self.xcen+self.xydev,self.ycen-self.xydev:self.ycen+self.xydev]))/(np.sum(self.current_image[self.xcen-self.xydev:self.xcen+self.xydev, self.ycen-self.xydev:self.ycen+self.xydev])))), broadcast=True)
-        #self.set_dataset(f"detection.images.counts",int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/87), broadcast=True)
-        #self.set_dataset("detection.images.total_counts",int(np.sum(self.current_image)), broadcast=True)
+        self.set_dataset(f"detection.images.ratio", int(10**6*((np.sum(self.current_image[self.xcen-self.xdev1:self.xcen,self.ycen-self.ydev:self.ycen+self.ydev]))/(np.sum(self.current_image[self.xcen-self.xdev1:self.xcen+self.xdev2, self.ycen-self.ydev:self.ycen+self.ydev])))), broadcast=True)
+        self.set_dataset(f"detection.images.counts",int((np.sum(self.current_image[self.x1:self.x2,self.y1:self.y2]))/87), broadcast=True)
+        self.set_dataset("detection.images.total_counts",int(np.sum(self.current_image)), broadcast=True)
         self.ind += 1
         
          
@@ -164,14 +167,14 @@ class _Camera(EnvExperiment):
         
         
         #Display for horizontal push
-        # display_image[self.xcen-self.xydev:self.xcen+self.xydev+1, self.ycen] = 200
-        # display_image[self.xcen-self.xydev,   self.ycen-self.xydev:self.ycen+1] = 200
-        # display_image[self.xcen,   self.ycen-self.xydev:self.ycen+1] = 200
-        # display_image[self.xcen+self.xydev,   self.ycen-self.xydev:self.ycen+1] = 200
-        # display_image[self.xcen-self.xydev:self.xcen+self.xydev+1,  self.ycen-self.xydev] = 200
-        # display_image[self.xcen:self.xcen+self.xydev+1,   self.ycen] = 200
-        # display_image[self.xcen,   self.ycen-self.xydev:self.ycen+1] = 200
-        # display_image[self.xcen+self.xydev,   self.ycen-self.xydev:self.ycen+1] = 200
+        display_image[self.xcen-self.xdev1:self.xcen+self.xdev2+1, self.ycen] = 200
+        display_image[self.xcen-self.xdev1,   self.ycen-self.ydev:self.ycen+1] = 200
+        display_image[self.xcen,   self.ycen-self.ydev:self.ycen+1] = 200
+        display_image[self.xcen+self.xdev2,   self.ycen-self.ydev:self.ycen+1] = 200
+        display_image[self.xcen-self.xdev1:self.xcen+self.xdev2+1,  self.ycen-self.ydev] = 200
+        display_image[self.xcen:self.xcen+self.xdev2+1,   self.ycen] = 200
+        display_image[self.xcen,   self.ycen-self.ydev:self.ycen+1] = 200
+        display_image[self.xcen+self.xdev2,   self.ycen-self.ydev:self.ycen+1] = 200
         
         #Display for Bragg
         #+1 order
@@ -182,11 +185,11 @@ class _Camera(EnvExperiment):
         # display_image[self.xint:self.xint+self.xydev+1, self.y0hk-self.intdev] = 200
         
         #-1 order
-        display_image[self.xint:self.xint+self.xydev+1, self.y0hk-self.intdev] = 200
-        display_image[self.xint,   self.y0hk-self.intdev:self.y2hkm+self.intdev+1] = 200
-        display_image[self.xint:self.xint+self.xydev+1, self.y2hkm+self.intdev] = 200
-        display_image[self.xint+self.xydev,   self.y0hk-self.intdev:self.y2hk+self.intdev+1] = 200
-        display_image[self.xint:self.xint+self.xydev+1, self.y0hk+self.intdev] = 200
+        # display_image[self.xint:self.xint+self.xydev+1, self.y0hk-self.intdev] = 200
+        # display_image[self.xint,   self.y0hk-self.intdev:self.y2hkm+self.intdev+1] = 200
+        # display_image[self.xint:self.xint+self.xydev+1, self.y2hkm+self.intdev] = 200
+        # display_image[self.xint+self.xydev,   self.y0hk-self.intdev:self.y2hk+self.intdev+1] = 200
+        # display_image[self.xint:self.xint+self.xydev+1, self.y0hk+self.intdev] = 200
         
         #display_image[self.xint-self.xydev:self.xint, self.y0hk-2:self.y0hk+2] = 50 #0hk marker
         #display_image[  80:85, 165:170] = 50

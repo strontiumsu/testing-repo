@@ -35,13 +35,9 @@ class _Bragg(EnvExperiment):
         self.freqs = [80.0, 110.0, 110.0, 80.0]
         # self.freqs = [110.0, 110.0, 80.00000, 200.0]
 
-        # self.urukul_channels = [self.get_device("urukul2_ch0"),
-        #                         self.get_device("urukul2_ch1"),
-        #                         self.get_device("urukul2_ch2"),
-        #                         self.get_device("urukul2_ch3")]
 
         self.urukul_channels = [self.get_device("urukul2_ch0"),
-                                self.get_device("urukul0_ch0"),  #added
+                                self.get_device("urukul2_ch1"), 
                                 self.get_device("urukul2_ch2"),
                                 self.get_device("urukul2_ch3")]
 
@@ -50,7 +46,7 @@ class _Bragg(EnvExperiment):
             AOM = self.AOMs[i]
             self.setattr_argument(f"scale_{AOM}", NumberValue(self.scales[i], min=0.0, max=0.9), f"{AOM}_AOMs")
             self.setattr_argument(f"atten_{AOM}", NumberValue(self.attens[i], min=1.0, max=30), f"{AOM}_AOMs")
-            self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=50.0000*1e6, max=350.0000*1e6, scale=1e6, unit='MHz'),  f"{AOM}_AOMs")
+            self.setattr_argument(f"freq_{AOM}", NumberValue(self.freqs[i]*1e6, min=0.1000*1e6, max=350.0000*1e6, scale=1e6, unit='MHz'),  f"{AOM}_AOMs")
 
 
     def prepare_aoms(self):
@@ -60,21 +56,23 @@ class _Bragg(EnvExperiment):
 
     @kernel
     def init_aoms(self, on=False):
-        delay(10*ms)
+        delay(50*ms)
         self.urukul2_cpld.init()
-        self.urukul0_cpld.init()  # added
+        for i in range(len(self.AOMs)):
+            delay(1*ms)
 
-        i = -1
-        for ch in self.urukul_channels:
-            i += 1
-            delay(10*ms)
+            ch = self.urukul_channels[i]
             ch.init()
-            ch.set(self.freqs[i], amplitude=self.scales[i])
-            ch.set_att(self.attens[i])
 
-            if on: ch.sw.on()
-            else: ch.sw.off()
-        delay(10 * ms)
+            set_f = ch.frequency_to_ftw(self.freqs[i])
+            set_asf = ch.amplitude_to_asf(self.scales[i])
+            ch.set_mu(set_f, asf=set_asf)
+            ch.set_att(self.attens[i])
+            if on:
+                ch.sw.on()
+            else:
+                ch.sw.off()
+        delay(50*ms)
 
 
     # basic AOM methods

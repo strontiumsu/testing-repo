@@ -13,7 +13,7 @@ from scan_framework import Scan1D, TimeScan
 from scipy.optimize import curve_fit
 
 
-class _Temperature_scan__template_exp(Scan1D, TimeScan, EnvExperiment):
+class _Temperature_scan_template_exp(Scan1D, TimeScan, EnvExperiment):
     
     def build(self, **kwargs):
         # required initializations

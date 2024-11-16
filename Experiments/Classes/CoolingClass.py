@@ -23,7 +23,7 @@ class _Cooling(EnvExperiment):
         ## TTLs
         self.setattr_device("ttl0") # shutter TTLs (2D and zeeman)
         self.setattr_device("ttl3") # MOT coil direction
-        self.setattr_device("ttl5") # for turning on and off modulation channel
+
         self.setattr_device("ttl6") # for switching to single freq channel
 
 
@@ -38,7 +38,7 @@ class _Cooling(EnvExperiment):
         # default values for all params for all AOMs
         self.scales = [0.8, 0.8, 0.8, 0.8]
         self.attens = [6.0, 6.0, 14.0, 16.0] # last two are for nova tech and are scaled between 0 and 1024
-        self.freqs = [180.0, 100.0, 80.0, 177.0]
+        self.freqs = [180.0, 100.0, 80.0, 180.0]
 
         self.urukul_channels = [self.get_device("urukul1_ch0"),
                                 self.get_device("urukul1_ch1"),
@@ -126,11 +126,11 @@ class _Cooling(EnvExperiment):
     @kernel
     def init_aoms(self, on=False):
 
-        delay(10*ms)
+        delay(50*ms)
         self.urukul1_cpld.init()
 
         for i in range(len(self.AOMs)):
-            delay(10*ms)
+            delay(1*ms)
 
             ch = self.urukul_channels[i]
             ch.init()
@@ -143,7 +143,7 @@ class _Cooling(EnvExperiment):
                 ch.sw.on()
             else:
                 ch.sw.off()
-        delay(10*ms)
+        delay(50*ms)
 
 
     @kernel
@@ -152,11 +152,11 @@ class _Cooling(EnvExperiment):
         with parallel:
             self.ttl0.output()
             self.ttl3.output()
+            self.ttl6.output()
         delay(10*ms)
         with parallel:
             self.ttl3.off()
             self.ttl0.off()
-            self.ttl5.on()
             self.ttl6.off()
 
 
