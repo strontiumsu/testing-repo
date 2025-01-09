@@ -15,7 +15,7 @@ from artiq.experiment import kernel, EnvExperiment
 import numpy as np
 
 
-class _Cooling(EnvExperiment):
+class Cooling(EnvExperiment):
     """
     Cooling class responsible for controlling and managing AOMs, MOT coils, and other hardware for cooling processes.
 
