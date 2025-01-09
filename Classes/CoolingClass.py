@@ -4,7 +4,7 @@ Created on Mon Jan 30 18:16:29 2023
 
 @author: ejporter
 
-Desc: This file contains the class that controls all blue MOT  and red MOT methods (loading, MOT coils, etc.)
+Desc: This file contains the class that controls all blue MOT  and red MOT methods (loading, MOT coils, eijtc.)
 """
 
 from artiq.experiment import ms, us, MHz
