@@ -16,8 +16,25 @@ import numpy as np
 
 
 class _Cooling(EnvExperiment):
+    """
+    Cooling class responsible for controlling and managing AOMs, MOT coils, and other hardware for cooling processes.
+
+    Attributes:
+        AOMs (list): List of AOM identifiers used in the experiment.
+        scales (list): Scaling factors for each AOM.
+        attens (list): Attenuations for each AOM.
+        freqs (list): Frequencies for each AOM in MHz.
+        urukul_channels (list): List of Urukul device channels.
+        dac_0: DAC device for controlling MOT coil current.
+        bmot_ramp_duration (float): Ramp duration for the blue MOT coils in milliseconds.
+        bmot_current (float): Current for blue MOT coils in amperes.
+        ... (other attributes as necessary).
+    """
 
     def build(self):
+        """
+        Initialize the Cooling class, setting up devices and default parameters for AOMs and MOT coils.
+        """
         self.setattr_device("core")
 
         ## TTLs
@@ -118,6 +135,11 @@ class _Cooling(EnvExperiment):
     #<><><><><><><>
 
     def prepare_aoms(self):
+        """
+        Prepare AOM parameters such as scale, attenuation, and frequency based on user-defined values.
+
+        This method initializes the scales, attenuations, and frequencies for the AOMs used in the experiment.
+        """
         self.scales = [self.scale_3D, self.scale_3P0_repump, self.scale_3P2_repump, self.scale_Probe]
         self.attens = [self.atten_3D, self.atten_3P0_repump, self.atten_3P2_repump, self.atten_Probe]
         self.freqs = [self.freq_3D, self.freq_3P0_repump, self.freq_3P2_repump, self.freq_Probe]
@@ -125,7 +147,12 @@ class _Cooling(EnvExperiment):
 
     @kernel
     def init_aoms(self, on=False):
+        """
+        Initialize AOMs by setting their frequency, scale, and attenuation. Optionally turn them on or off.
 
+        Args:
+            on (bool): If True, turn the AOMs on. If False, turn them off.
+        """
         delay(50*ms)
         self.urukul1_cpld.init()
 
@@ -148,6 +175,9 @@ class _Cooling(EnvExperiment):
 
     @kernel
     def init_ttls(self):
+        """
+        Initialize TTL outputs for controlling various devices in the setup.
+        """
         delay(100*ms)
         with parallel:
             self.ttl0.output()
@@ -163,12 +193,24 @@ class _Cooling(EnvExperiment):
     # turns AOMs on/off via RF switch
     @kernel
     def AOMs_on(self, AOMs):
+        """
+        Turn specified AOMs on via RF switches.
+
+        Args:
+            AOMs (list): List of AOM names to be turned on.
+        """
         with parallel:
             for aom in AOMs:
                 self.urukul_channels[self.index_artiq(aom)].sw.on()
 
     @kernel
     def AOMs_off(self, AOMs):
+        """
+        Turn specified AOMs off via RF switches.
+
+        Args:
+            AOMs (list): List of AOM names to be turned off.
+        """
         with parallel:
             for aom in AOMs:
                 self.urukul_channels[self.index_artiq(aom)].sw.off()
@@ -178,6 +220,12 @@ class _Cooling(EnvExperiment):
     # takes in a tuples of (val, aom_name) to update freq/atten/sf e..g [("AOM1" new_freq1), ("AOM2", new_freq2)]
     @kernel
     def set_AOM_freqs(self, freq_list): # takes in a list of tuples
+        """
+        Update frequencies for specified AOMs.
+
+        Args:
+            freq_list (list): List of tuples where each tuple contains the AOM name and the new frequency.
+        """
         with parallel:
             for aom, freq in freq_list:
                 ind = self.index_artiq(aom)
@@ -189,6 +237,12 @@ class _Cooling(EnvExperiment):
 
     @kernel
     def set_AOM_attens(self, atten_list):
+        """
+        Update scales for specified AOMs.
+
+        Args:
+            scale_list (list): List of tuples where each tuple contains the AOM name and the new scale value.
+        """
         with parallel:
             for aom, atten in atten_list:
                 ind  = self.index_artiq(aom)
@@ -196,7 +250,7 @@ class _Cooling(EnvExperiment):
                 self.urukul_channels[ind].set_att(atten)
 
     @kernel
-    def set_AOM_scales(self, scale_list):
+    def set_AOM_scales(self,  scale_list):
         with parallel:
             for aom, scale in scale_list:
                 ind = self.index_artiq(aom)
@@ -211,9 +265,15 @@ class _Cooling(EnvExperiment):
     # turns the zeeman and 2D off/on via shutter
     @kernel
     def atom_source_on(self):
+        """
+        Turn on the atom source by activating the relevant TTL.
+        """
         self.ttl0.on()
     @kernel
     def atom_source_off(self):
+        """
+        Turn off the atom source by deactivating the relevant TTL.
+        """
         self.ttl0.off()
 
 
@@ -223,6 +283,9 @@ class _Cooling(EnvExperiment):
     #<><><><><><><><>
 
     def prepare_coils(self):
+        """
+        Prepare parameters for coil operation, including ramp duration and current settings.
+        """
         self.Npoints += (1-self.Npoints%2)
         self.window = np.blackman(self.Npoints)
         self.dt = self.bmot_ramp_duration/((self.Npoints-1)//2)
@@ -230,6 +293,9 @@ class _Cooling(EnvExperiment):
 
     @kernel
     def init_coils(self):
+        """
+        Initialize the MOT coils by configuring the DAC and setting the initial state.
+        """
         self.dac_0.init() # initialize DAC that controls setpoint
         delay(5*ms)
         self.ttl3.off()  # puts in MOT config
@@ -237,11 +303,14 @@ class _Cooling(EnvExperiment):
     # sets to 0 current
     @kernel
     def coils_off(self):
+        """
+        Turn off the coils by setting the current to zero.
+        """
         self.set_current(0.0)
 
     # sets MOT current
     @kernel
-    def set_current(self, cur):
+    def set_current(self, cur : float):
         if cur > 8:
             raise Exception("Current too high!")
         else:
@@ -249,8 +318,13 @@ class _Cooling(EnvExperiment):
 
     # switches between MOT configs
     @kernel
-    def set_current_dir(self, direc):
+    def set_current_dir(self,  direc:float):
+        """
+        Set the direction of the current in the MOT coils.
 
+        Args:
+            direc (int): Direction indicator (0 or +1).
+        """
         #is this right?
         assert direc in [0,+1]
 
