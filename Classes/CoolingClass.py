@@ -29,6 +29,8 @@ class _Cooling(EnvExperiment):
         bmot_ramp_duration (float): Ramp duration for the blue MOT coils in milliseconds.
         bmot_current (float): Current for blue MOT coils in amperes.
         ... (other attributes as necessary).
+
+        pdoc: show
     """
 
     def build(self):
